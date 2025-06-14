@@ -3,406 +3,500 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hizliyim Forum</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <title>Hizliyim | Giriş</title>
   <style>
-    body {
-      margin: 0; 
+    @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body, html {
+      margin: 0; padding: 0;
+      height: 100%;
       font-family: 'Poppins', sans-serif;
       background-color: #f8f3e8; /* krem */
       color: #264d7b; /* koyu mavi */
-      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animasyonlu karşılama */
+    #welcome-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, #a2b9f7, #264d7b);
       display: flex;
       flex-direction: column;
+      justify-content: center;
       align-items: center;
+      color: white;
+      z-index: 100;
+      animation: fadeInBg 1.5s ease forwards;
+      text-align: center;
       padding: 20px;
     }
-    header {
+
+    @keyframes fadeInBg {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+
+    #welcome-screen h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      animation: slideDown 1s ease forwards;
+    }
+
+    #welcome-screen p {
+      font-size: 1.2rem;
+      margin-bottom: 40px;
+      animation: slideDown 1.2s ease forwards;
+      animation-delay: 0.2s;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #welcome-screen button {
+      background-color: #264d7b;
+      border: none;
+      color: white;
+      padding: 15px 30px;
+      font-size: 1.1rem;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 600;
+      margin: 10px;
+      transition: background-color 0.3s ease;
+    }
+    #welcome-screen button:hover {
+      background-color: #3f6ab8;
+    }
+
+    #top-right-login {
+      position: fixed;
+      top: 15px;
+      right: 20px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      user-select: none;
+      z-index: 101;
+      transition: color 0.3s ease;
+    }
+    #top-right-login:hover {
+      color: #a2b9f7;
+    }
+
+    #bottom-register {
+      position: fixed;
+      bottom: 20px;
       width: 100%;
-      max-width: 600px;
+      text-align: center;
+      color: white;
+      font-weight: 600;
+      user-select: none;
+      cursor: pointer;
+      font-size: 1rem;
+      z-index: 101;
+      transition: color 0.3s ease;
+    }
+    #bottom-register:hover {
+      color: #a2b9f7;
+    }
+
+    /* FORM SAYFALARI */
+    .auth-form {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 380px;
+      width: 90%;
+      margin: auto;
+      box-shadow: 0 10px 20px rgba(38, 77, 123, 0.3);
+      color: #264d7b;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    @keyframes fadeIn {
+      from {opacity:0; transform: translateY(20px);}
+      to {opacity:1; transform: translateY(0);}
+    }
+
+    .auth-form h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    .auth-form input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border: 2px solid #264d7b;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 500;
+      outline-offset: 3px;
+      outline-color: transparent;
+      transition: outline-color 0.3s ease;
+    }
+    .auth-form input:focus {
+      outline-color: #a2b9f7;
+    }
+
+    .auth-form button {
+      width: 100%;
+      background-color: #264d7b;
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .auth-form button:hover {
+      background-color: #3f6ab8;
+    }
+
+    .link-text {
+      color: #264d7b;
+      cursor: pointer;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 10px;
+      user-select: none;
+      transition: color 0.3s ease;
+    }
+    .link-text:hover {
+      color: #3f6ab8;
+    }
+
+    /* ANA SAYFA */
+    #app {
+      display: none;
+      max-width: 700px;
+      margin: 50px auto;
+      color: #264d7b;
+    }
+    #app header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
     }
-    button {
+    #app header h1 {
+      margin: 0;
+      font-weight: 700;
+      font-size: 2rem;
+    }
+    #app button#logout {
       background-color: #264d7b;
-      color: #f8f3e8;
+      color: white;
       border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
+      border-radius: 20px;
+      padding: 10px 20px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
     }
-    button:hover {
+    #app button#logout:hover {
       background-color: #3f6ab8;
     }
-    form {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      max-width: 400px;
+
+    #new-post textarea {
       width: 100%;
-      margin-bottom: 30px;
-    }
-    input[type="text"], input[type="email"], input[type="password"], textarea {
-      width: 100%;
-      padding: 8px;
-      margin: 8px 0 16px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+      min-height: 80px;
+      padding: 12px;
+      border-radius: 15px;
+      border: 2px solid #264d7b;
       font-size: 1rem;
-    }
-    textarea {
       resize: vertical;
-      min-height: 60px;
+      font-family: 'Poppins', sans-serif;
+      margin-bottom: 10px;
+      outline-offset: 3px;
+      outline-color: transparent;
+      transition: outline-color 0.3s ease;
     }
-    .message, .reply {
-      background: white;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    #new-post textarea:focus {
+      outline-color: #a2b9f7;
     }
-    .message-username {
+    #new-post button {
+      background-color: #264d7b;
+      color: white;
+      border: none;
+      border-radius: 15px;
+      padding: 12px 20px;
       font-weight: 700;
-      margin-bottom: 5px;
-    }
-    .reply {
-      margin-left: 20px;
-      background: #e1eaf5;
-    }
-    .reply-username {
-      font-weight: 600;
-      font-style: italic;
-      margin-bottom: 5px;
-    }
-    #messages-container {
-      width: 100%;
-      max-width: 600px;
-      margin-top: 20px;
-      overflow-y: auto;
-      max-height: 400px;
-    }
-    .reply-form {
-      margin-top: 8px;
-    }
-    a.link {
-      color: #264d7b;
-      text-decoration: underline;
+      font-size: 1rem;
       cursor: pointer;
-      font-weight: 600;
+      transition: background-color 0.3s ease;
     }
+    #new-post button:hover {
+      background-color: #3f6ab8;
+    }
+
+    /* Feed mesajlar */
+    #posts {
+      margin-top: 30px;
+    }
+    .post {
+      background: white;
+      border-radius: 15px;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 15px rgba(38,77,123,0.15);
+      font-weight: 500;
+      font-size: 1rem;
+      color: #264d7b;
+    }
+    .post .post-author {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
   </style>
 </head>
 <body>
 
-<header>
-  <div id="user-info" style="font-weight:bold"></div>
-  <button id="logout-btn" style="display:none">Çıkış Yap</button>
-</header>
+  <!-- Karşılama ekranı -->
+  <div id="welcome-screen">
+    <h1>Hizliyim'e Hoşgeldin</h1>
+    <p>Hemen başlayabilmek için giriş yap veya kayıt ol.</p>
+    <button id="btn-login">Giriş Yap</button>
+  </div>
 
-<!-- Kayıt ve Giriş Formu -->
-<div id="auth-forms">
-  <form id="register-form">
+  <div id="top-right-login">Giriş Yap</div>
+  <div id="bottom-register">Hesabın yok mu? Kayıt Ol</div>
+
+  <!-- Giriş Formu -->
+  <div id="login-form" class="auth-form" style="display:none;">
+    <h2>Giriş Yap</h2>
+    <input type="email" id="login-email" placeholder="E-posta" required />
+    <input type="password" id="login-password" placeholder="Şifre" required />
+    <button id="login-submit">Giriş Yap</button>
+    <div class="link-text" id="to-register">Hesabın yok mu? Kayıt Ol</div>
+  </div>
+
+  <!-- Kayıt Formu -->
+  <div id="register-form" class="auth-form" style="display:none;">
     <h2>Kayıt Ol</h2>
     <input type="text" id="register-username" placeholder="Kullanıcı Adı" required minlength="3" />
     <input type="email" id="register-email" placeholder="E-posta" required />
     <input type="password" id="register-password" placeholder="Şifre" required minlength="6" />
-    <button type="submit">Kayıt Ol</button>
-  </form>
+    <button id="register-submit">Kayıt Ol</button>
+    <div class="link-text" id="to-login">Zaten hesabın var mı? Giriş Yap</div>
+  </div>
 
-  <form id="login-form" style="margin-top: 30px;">
-    <h2>Giriş Yap</h2>
-    <input type="email" id="login-email" placeholder="E-posta" required />
-    <input type="password" id="login-password" placeholder="Şifre" required />
-    <button type="submit">Giriş Yap</button>
-  </form>
-</div>
+  <!-- Ana Sayfa -->
+  <div id="app">
+    <header>
+      <h1>Hizliyim Feed</h1>
+      <button id="logout">Çıkış Yap</button>
+    </header>
 
-<!-- Ana Sayfa Mesajlaşma Alanı -->
-<div id="app" style="display:none; max-width:600px; width:100%;">
-  <h2>Mesaj Bırak</h2>
-  <form id="message-form">
-    <textarea id="message-input" placeholder="Mesajınızı yazın..." required></textarea>
-    <button type="submit">Gönder</button>
-  </form>
+    <section id="new-post">
+      <textarea id="post-text" placeholder="Ne düşünüyorsun?"></textarea>
+      <button id="post-submit">Gönder</button>
+    </section>
 
-  <h2>Mesajlar</h2>
-  <div id="messages-container"></div>
-</div>
+    <section id="posts"></section>
+  </div>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-<script>
-  // Firebase yapılandırman (kendin firebase console'dan oluşturup alacaksın)
-  const firebaseConfig = {
-    apiKey: "AIzaSyCP0Rd8CAfzYRPtakfdQWBqS5uBn045XpE",
-    authDomain: "hizliyimforum.firebaseapp.com",
-    projectId: "hizliyimforum",
-    storageBucket: "hizliyimforum.firebasestorage.app",
-    messagingSenderId: "903963422468",
-    appId: "1:903963422468:web:936c368393585efd0cea51"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyCP0Rd8CAfzYRPtakfdQWBqS5uBn045XpE",
+      authDomain: "hizliyimforum.firebaseapp.com",
+      databaseURL: "https://hizliyimforum-default-rtdb.firebaseio.com",
+      projectId: "hizliyimforum",
+      storageBucket: "hizliyimforum.firebasestorage.app",
+      messagingSenderId: "903963422468",
+      appId: "1:903963422468:web:936c368393585efd0cea51"
+    };
 
-  // Firebase'i başlat
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  // Elements
-  const registerForm = document.getElementById('register-form');
-  const loginForm = document.getElementById('login-form');
-  const authForms = document.getElementById('auth-forms');
-  const appDiv = document.getElementById('app');
-  const logoutBtn = document.getElementById('logout-btn');
-  const userInfo = document.getElementById('user-info');
-  const messageForm = document.getElementById('message-form');
-  const messageInput = document.getElementById('message-input');
-  const messagesContainer = document.getElementById('messages-container');
+    // Elementler
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const topRightLogin = document.getElementById('top-right-login');
+    const bottomRegister = document.getElementById('bottom-register');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const appDiv = document.getElementById('app');
 
-  let currentUser = null;
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    const loginSubmit = document.getElementById('login-submit');
 
-  // Kullanıcı kayıt işlemi
-  registerForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const username = document.getElementById('register-username').value.trim();
-    const email = document.getElementById('register-email').value.trim();
-    const password = document.getElementById('register-password').value;
+    const registerUsername = document.getElementById('register-username');
+    const registerEmail = document.getElementById('register-email');
+    const registerPassword = document.getElementById('register-password');
+    const registerSubmit = document.getElementById('register-submit');
 
-    if(username.length < 3) {
-      alert("Kullanıcı adı en az 3 karakter olmalı.");
-      return;
+    const postText = document.getElementById('post-text');
+    const postSubmit = document.getElementById('post-submit');
+    const postsSection = document.getElementById('posts');
+    const logoutBtn = document.getElementById('logout');
+
+    // Göster/gizle fonksiyonları
+    function showWelcome() {
+      welcomeScreen.style.display = 'flex';
+      topRightLogin.style.display = 'block';
+      bottomRegister.style.display = 'block';
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'none';
+      appDiv.style.display = 'none';
+    }
+    function showLogin() {
+      welcomeScreen.style.display = 'none';
+      topRightLogin.style.display = 'none';
+      bottomRegister.style.display = 'none';
+      loginForm.style.display = 'block';
+      registerForm.style.display = 'none';
+      appDiv.style.display = 'none';
+    }
+    function showRegister() {
+      welcomeScreen.style.display = 'none';
+      topRightLogin.style.display = 'none';
+      bottomRegister.style.display = 'none';
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'block';
+      appDiv.style.display = 'none';
+    }
+    function showApp() {
+      welcomeScreen.style.display = 'none';
+      topRightLogin.style.display = 'none';
+      bottomRegister.style.display = 'none';
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'none';
+      appDiv.style.display = 'block';
     }
 
-    try {
-      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-      currentUser = userCredential.user;
-
-      // Kullanıcı adı Firestore'da saklanıyor
-      await db.collection('users').doc(currentUser.uid).set({
-        username: username,
-        email: email,
-        createdAt: new Date()
-      });
-
-      console.log("Kullanıcı kaydı yapıldı:", username);
-
-      // Oturumu güncelle
-      showApp();
-    } catch(error) {
-      alert("Kayıt hatası: " + error.message);
+    // Kullanıcı adını getir
+    async function getUsername(uid) {
+      const docRef = doc(db, "users", uid);
+      const docSnap = await getDoc(docRef);
+      if(docSnap.exists()) {
+        return docSnap.data().username;
+      }
+      return "Kullanıcı";
     }
-  });
 
-  // Kullanıcı giriş işlemi
-  loginForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-
-    try {
-      const userCredential = await auth.signInWithEmailAndPassword(email, password);
-      currentUser = userCredential.user;
-      console.log("Giriş yapıldı:", currentUser.email);
-      showApp();
-    } catch(error) {
-      alert("Giriş hatası: " + error.message);
-    }
-  });
-
-  // Kullanıcı çıkış işlemi
-  logoutBtn.addEventListener('click', () => {
-    auth.signOut();
-  });
-
-  // Kullanıcı değişimlerini dinle (giriş/çıkış)
-  auth.onAuthStateChanged(async user => {
-    if(user) {
-      currentUser = user;
-      logUserAction(user.uid, 'Giriş yaptı');
-      showApp();
-    } else {
-      currentUser = null;
-      logUserAction(null, 'Çıkış yaptı');
-      showLogin();
-    }
-  });
-
-  // Giriş yapıldıktan sonra uygulamayı göster
-  async function showApp() {
-    authForms.style.display = 'none';
-    appDiv.style.display = 'block';
-    logoutBtn.style.display = 'inline-block';
-
-    // Kullanıcı adı çek
-    const userDoc = await db.collection('users').doc(currentUser.uid).get();
-    const username = userDoc.exists ? userDoc.data().username : "Kullanıcı";
-
-    userInfo.textContent = `${username} olarak giriş yaptınız.`;
-
-    loadMessages();
-  }
-
-  // Giriş ekranını göster
-  function showLogin() {
-    authForms.style.display = 'block';
-    appDiv.style.display = 'none';
-    logoutBtn.style.display = 'none';
-    userInfo.textContent = '';
-  }
-
-  // Mesajları yükle ve göster
-  function loadMessages() {
-    messagesContainer.innerHTML = '';
-
-    db.collection('messages')
-      .orderBy('createdAt', 'desc')
-      .onSnapshot(snapshot => {
-        messagesContainer.innerHTML = ''; // Temizle
-        snapshot.forEach(doc => {
-          const message = doc.data();
-          const msgDiv = document.createElement('div');
-          msgDiv.className = 'message';
-
-          // Mesajı yazan kullanıcı adı
-          let authorName = message.username || "Anonim";
-
-          msgDiv.innerHTML = `
-            <div class="message-username">${authorName}</div>
-            <div>${escapeHtml(message.text)}</div>
-            <div style="margin-top:10px;">
-              <a href="#" class="link reply-link" data-id="${doc.id}">Cevapla</a>
-            </div>
-            <div class="replies" id="replies-${doc.id}"></div>
-          `;
-
-          messagesContainer.appendChild(msgDiv);
-
-          // Cevapları yükle
-          loadReplies(doc.id);
-
-          // Cevapla linkine tıklandığında
-          msgDiv.querySelector('.reply-link').addEventListener('click', e => {
-            e.preventDefault();
-            showReplyForm(doc.id);
-          });
-        });
-      });
-  }
-
-  // Cevapları yükle
-  function loadReplies(messageId) {
-    const repliesDiv = document.getElementById('replies-' + messageId);
-    if(!repliesDiv) return;
-
-    db.collection('messages').doc(messageId).collection('replies')
-      .orderBy('createdAt', 'asc')
-      .onSnapshot(snapshot => {
-        repliesDiv.innerHTML = '';
-        snapshot.forEach(doc => {
-          const reply = doc.data();
-          const replyDiv = document.createElement('div');
-          replyDiv.className = 'reply';
-          replyDiv.innerHTML = `
-            <div class="reply-username">${reply.username || "Anonim"}</div>
-            <div>${escapeHtml(reply.text)}</div>
-          `;
-          repliesDiv.appendChild(replyDiv);
-        });
-      });
-  }
-
-  // Cevap formunu göster
-  function showReplyForm(messageId) {
-    // Önce var olan formu kaldır
-    const oldForm = document.querySelector('.reply-form');
-    if(oldForm) oldForm.remove();
-
-    const repliesDiv = document.getElementById('replies-' + messageId);
-    if(!repliesDiv) return;
-
-    const form = document.createElement('form');
-    form.className = 'reply-form';
-
-    form.innerHTML = `
-      <textarea required placeholder="Cevabınızı yazın..."></textarea>
-      <button type="submit">Gönder</button>
-    `;
-
-    repliesDiv.appendChild(form);
-
-    form.addEventListener('submit', async e => {
+    // Kayıt olma işlemi
+    registerSubmit.addEventListener('click', async (e) => {
       e.preventDefault();
-      const text = form.querySelector('textarea').value.trim();
-      if(text === '') return alert('Cevap boş olamaz!');
+      const username = registerUsername.value.trim();
+      const email = registerEmail.value.trim();
+      const password = registerPassword.value;
 
-      // Kullanıcı adı al
-      const userDoc = await db.collection('users').doc(currentUser.uid).get();
-      const username = userDoc.exists ? userDoc.data().username : "Kullanıcı";
+      if(username.length < 3) return alert("Kullanıcı adı en az 3 karakter olmalı.");
+      if(password.length < 6) return alert("Şifre en az 6 karakter olmalı.");
 
-      // Firestore'a kaydet
-      await db.collection('messages').doc(messageId).collection('replies').add({
-        text: text,
-        username: username,
-        createdAt: new Date()
-      });
-
-      form.remove();
-    });
-  }
-
-  // Mesaj gönderme
-  messageForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const text = messageInput.value.trim();
-    if(text === '') return alert('Mesaj boş olamaz!');
-
-    // Kullanıcı adı al
-    const userDoc = await db.collection('users').doc(currentUser.uid).get();
-    const username = userDoc.exists ? userDoc.data().username : "Kullanıcı";
-
-    // Firestore'a kaydet
-    await db.collection('messages').add({
-      text: text,
-      username: username,
-      createdAt: new Date()
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Kullanıcı adı Firestore'a kaydet
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          username: username,
+          email: email,
+          createdAt: new Date()
+        });
+      } catch (error) {
+        alert("Kayıt hatası: " + error.message);
+      }
     });
 
-    messageInput.value = '';
-  });
+    // Giriş yapma
+    loginSubmit.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
 
-  // Basit güvenlik için HTML escape
-  function escapeHtml(text) {
-    return text.replace(/&/g, "&amp;")
-               .replace(/</g, "&lt;")
-               .replace(/>/g, "&gt;")
-               .replace(/"/g, "&quot;")
-               .replace(/'/g, "&#039;");
-  }
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch(error) {
+        alert("Giriş hatası: " + error.message);
+      }
+    });
 
-  // Kullanıcı giriş-çıkış loglarını konsola yaz
-  function logUserAction(uid, action) {
-    const time = new Date().toLocaleString();
-    if(uid) {
-      console.log(`[${time}] Kullanıcı ${uid} ${action}`);
-      // İstersen Firestore'a da ekleyebilirsin:
-      /*
-      db.collection('logs').add({
-        uid: uid,
-        action: action,
-        timestamp: new Date()
+    // Çıkış yap
+    logoutBtn.addEventListener('click', () => {
+      signOut(auth);
+    });
+
+    // Post gönder
+    postSubmit.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const text = postText.value.trim();
+      if(text === '') return alert('Mesaj boş olamaz!');
+      const user = auth.currentUser;
+      if(!user) return alert('Giriş yapmalısın!');
+
+      const username = await getUsername(user.uid);
+      try {
+        await addDoc(collection(db, 'posts'), {
+          text,
+          username,
+          uid: user.uid,
+          createdAt: new Date()
+        });
+        postText.value = '';
+      } catch (error) {
+        alert('Mesaj gönderilemedi: ' + error.message);
+      }
+    });
+
+    // Postları dinle
+    function listenPosts() {
+      const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+      onSnapshot(q, (snapshot) => {
+        postsSection.innerHTML = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const div = document.createElement('div');
+          div.className = 'post';
+          div.innerHTML = `<div class="post-author">${escapeHtml(data.username)}</div><div>${escapeHtml(data.text)}</div>`;
+          postsSection.appendChild(div);
+        });
       });
-      */
-    } else {
-      console.log(`[${time}] ${action}`);
     }
-  }
-</script>
 
-</body>
-</html>
+    // HTML escape
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+    }
+
+    // Auth state dinle
+    onAuthStateChanged(auth, user => {
+      if(user) {
+        showApp();
+        listenPosts();
+      } else {
+        showWelcome();
+      }
+    });
+
+    // Buton eventleri
+    document.getElementById('btn-login').addEventListener('click', showLogin);
+    topRightLogin.addEventListener('click', showLogin);
+    bottomRegister.addEventListener('click', showRegister);
+    document.getElementById('to-register').addEventListener('click', show
