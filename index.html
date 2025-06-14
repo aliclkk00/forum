@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hizliyim Forum</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0; 
+      font-family: 'Poppins', sans-serif;
+      background-color: #f8f3e8; /* krem */
+      color: #264d7b; /* koyu mavi */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    header {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #264d7b;
+      color: #f8f3e8;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover {
+      background-color: #3f6ab8;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+      margin-bottom: 30px;
+    }
+    input[type="text"], input[type="email"], input[type="password"], textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0 16px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .message, .reply {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .message-username {
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    .reply {
+      margin-left: 20px;
+      background: #e1eaf5;
+    }
+    .reply-username {
+      font-weight: 600;
+      font-style: italic;
+      margin-bottom: 5px;
+    }
+    #messages-container {
+      width: 100%;
+      max-width: 600px;
+      margin-top: 20px;
+      overflow-y: auto;
+      max-height: 400px;
+    }
+    .reply-form {
+      margin-top: 8px;
+    }
+    a.link {
+      color: #264d7b;
+      text-decoration: underline;
+      cursor: pointer;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div id="user-info" style="font-weight:bold"></div>
+  <button id="logout-btn" style="display:none">Çıkış Yap</button>
+</header>
+
+<!-- Kayıt ve Giriş Formu -->
+<div id="auth-forms">
+  <form id="register-form">
+    <h2>Kayıt Ol</h2>
+    <input type="text" id="register-username" placeholder="Kullanıcı Adı" required minlength="3" />
+    <input type="email" id="register-email" placeholder="E-posta" required />
+    <input type="password" id="register-password" placeholder="Şifre" required minlength="6" />
+    <button type="submit">Kayıt Ol</button>
+  </form>
+
+  <form id="login-form" style="margin-top: 30px;">
+    <h2>Giriş Yap</h2>
+    <input type="email" id="login-email" placeholder="E-posta" required />
+    <input type="password" id="login-password" placeholder="Şifre" required />
+    <button type="submit">Giriş Yap</button>
+  </form>
+</div>
+
+<!-- Ana Sayfa Mesajlaşma Alanı -->
+<div id="app" style="display:none; max-width:600px; width:100%;">
+  <h2>Mesaj Bırak</h2>
+  <form id="message-form">
+    <textarea id="message-input" placeholder="Mesajınızı yazın..." required></textarea>
+    <button type="submit">Gönder</button>
+  </form>
+
+  <h2>Mesajlar</h2>
+  <div id="messages-container"></div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js"></script>
+
+<script>
+  // Firebase yapılandırman (kendin firebase console'dan oluşturup alacaksın)
+  const firebaseConfig = {
+    apiKey: "FİREBASE_API_KEYİNİ_YAZ",
+    authDomain: "FİREBASE_AUTHDOMAIN",
+    projectId: "FİREBASE_PROJECTID",
+    storageBucket: "FİREBASE_STORAGEBUCKET",
+    messagingSenderId: "FİREBASE_MSGSENDERID",
+    appId: "FİREBASE_APPID"
+  };
+
+  // Firebase'i başlat
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Elements
+  const registerForm = document.getElementById('register-form');
+  const loginForm = document.getElementById('login-form');
+  const authForms = document.getElementById('auth-forms');
+  const appDiv = document.getElementById('app');
+  const logoutBtn = document.getElementById('logout-btn');
+  const userInfo = document.getElementById('user-info');
+  const messageForm = document.getElementById('message-form');
+  const messageInput = document.getElementById('message-input');
+  const messagesContainer = document.getElementById('messages-container');
+
+  let currentUser = null;
+
+  // Kullanıcı kayıt işlemi
+  registerForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const username = document.getElementById('register-username').value.trim();
+    const email = document.getElementById('register-email').value.trim();
+    const password = document.getElementById('register-password').value;
+
+    if(username.length < 3) {
+      alert("Kullanıcı adı en az 3 karakter olmalı.");
+      return;
+    }
+
+    try {
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      currentUser = userCredential.user;
+
+      // Kullanıcı adı Firestore'da saklanıyor
+      await db.collection('users').doc(currentUser.uid).set({
+        username: username,
+        email: email,
+        createdAt: new Date()
+      });
+
+      console.log("Kullanıcı kaydı yapıldı:", username);
+
+      // Oturumu güncelle
+      showApp();
+    } catch(error) {
+      alert("Kayıt hatası: " + error.message);
+    }
+  });
+
+  // Kullanıcı giriş işlemi
+  loginForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    try {
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      currentUser = userCredential.user;
+      console.log("Giriş yapıldı:", currentUser.email);
+      showApp();
+    } catch(error) {
+      alert("Giriş hatası: " + error.message);
+    }
+  });
+
+  // Kullanıcı çıkış işlemi
+  logoutBtn.addEventListener('click', () => {
+    auth.signOut();
+  });
+
+  // Kullanıcı değişimlerini dinle (giriş/çıkış)
+  auth.onAuthStateChanged(async user => {
+    if(user) {
+      currentUser = user;
+      logUserAction(user.uid, 'Giriş yaptı');
+      showApp();
+    } else {
+      currentUser = null;
+      logUserAction(null, 'Çıkış yaptı');
+      showLogin();
+    }
+  });
+
+  // Giriş yapıldıktan sonra uygulamayı göster
+  async function showApp() {
+    authForms.style.display = 'none';
+    appDiv.style.display = 'block';
+    logoutBtn.style.display = 'inline-block';
+
+    // Kullanıcı adı çek
+    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+    const username = userDoc.exists ? userDoc.data().username : "Kullanıcı";
+
+    userInfo.textContent = `${username} olarak giriş yaptınız.`;
+
+    loadMessages();
+  }
+
+  // Giriş ekranını göster
+  function showLogin() {
+    authForms.style.display = 'block';
+    appDiv.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    userInfo.textContent = '';
+  }
+
+  // Mesajları yükle ve göster
+  function loadMessages() {
+    messagesContainer.innerHTML = '';
+
+    db.collection('messages')
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(snapshot => {
+        messagesContainer.innerHTML = ''; // Temizle
+        snapshot.forEach(doc => {
+          const message = doc.data();
+          const msgDiv = document.createElement('div');
+          msgDiv.className = 'message';
+
+          // Mesajı yazan kullanıcı adı
+          let authorName = message.username || "Anonim";
+
+          msgDiv.innerHTML = `
+            <div class="message-username">${authorName}</div>
+            <div>${escapeHtml(message.text)}</div>
+            <div style="margin-top:10px;">
+              <a href="#" class="link reply-link" data-id="${doc.id}">Cevapla</a>
+            </div>
+            <div class="replies" id="replies-${doc.id}"></div>
+          `;
+
+          messagesContainer.appendChild(msgDiv);
+
+          // Cevapları yükle
+          loadReplies(doc.id);
+
+          // Cevapla linkine tıklandığında
+          msgDiv.querySelector('.reply-link').addEventListener('click', e => {
+            e.preventDefault();
+            showReplyForm(doc.id);
+          });
+        });
+      });
+  }
+
+  // Cevapları yükle
+  function loadReplies(messageId) {
+    const repliesDiv = document.getElementById('replies-' + messageId);
+    if(!repliesDiv) return;
+
+    db.collection('messages').doc(messageId).collection('replies')
+      .orderBy('createdAt', 'asc')
+      .onSnapshot(snapshot => {
+        repliesDiv.innerHTML = '';
+        snapshot.forEach(doc => {
+          const reply = doc.data();
+          const replyDiv = document.createElement('div');
+          replyDiv.className = 'reply';
+          replyDiv.innerHTML = `
+            <div class="reply-username">${reply.username || "Anonim"}</div>
+            <div>${escapeHtml(reply.text)}</div>
+          `;
+          repliesDiv.appendChild(replyDiv);
+        });
+      });
+  }
+
+  // Cevap formunu göster
+  function showReplyForm(messageId) {
+    // Önce var olan formu kaldır
+    const oldForm = document.querySelector('.reply-form');
+    if(oldForm) oldForm.remove();
+
+    const repliesDiv = document.getElementById('replies-' + messageId);
+    if(!repliesDiv) return;
+
+    const form = document.createElement('form');
+    form.className = 'reply-form';
+
+    form.innerHTML = `
+      <textarea required placeholder="Cevabınızı yazın..."></textarea>
+      <button type="submit">Gönder</button>
+    `;
+
+    repliesDiv.appendChild(form);
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const text = form.querySelector('textarea').value.trim();
+      if(text === '') return alert('Cevap boş olamaz!');
+
+      // Kullanıcı adı al
+      const userDoc = await db.collection('users').doc(currentUser.uid).get();
+      const username = userDoc.exists ? userDoc.data().username : "Kullanıcı";
+
+      // Firestore'a kaydet
+      await db.collection('messages').doc(messageId).collection('replies').add({
+        text: text,
+        username: username,
+        createdAt: new Date()
+      });
+
+      form.remove();
+    });
+  }
+
+  // Mesaj gönderme
+  messageForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const text = messageInput.value.trim();
+    if(text === '') return alert('Mesaj boş olamaz!');
+
+    // Kullanıcı adı al
+    const userDoc = await db.collection('users').doc(currentUser.uid).get();
+    const username = userDoc.exists ? userDoc.data().username : "Kullanıcı";
+
+    // Firestore'a kaydet
+    await db.collection('messages').add({
+      text: text,
+      username: username,
+      createdAt: new Date()
+    });
+
+    messageInput.value = '';
+  });
+
+  // Basit güvenlik için HTML escape
+  function escapeHtml(text) {
+    return text.replace(/&/g, "&amp;")
+               .replace(/</g, "&lt;")
+               .replace(/>/g, "&gt;")
+               .replace(/"/g, "&quot;")
+               .replace(/'/g, "&#039;");
+  }
+
+  // Kullanıcı giriş-çıkış loglarını konsola yaz
+  function logUserAction(uid, action) {
+    const time = new Date().toLocaleString();
+    if(uid) {
+      console.log(`[${time}] Kullanıcı ${uid} ${action}`);
+      // İstersen Firestore'a da ekleyebilirsin:
+      /*
+      db.collection('logs').add({
+        uid: uid,
+        action: action,
+        timestamp: new Date()
+      });
+      */
+    } else {
+      console.log(`[${time}] ${action}`);
+    }
+  }
+</script>
+
+</body>
+</html>
