@@ -1,123 +1,24 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Hizliyim Giriş / Kayıt</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
-    form { display: none; }
-    form.active { display: block; }
-    input, button { width: 100%; margin: 8px 0; padding: 10px; }
-  </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDocs, collection, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-
-    // 🔥 Senin verdiğin Firebase ayarları
-    const firebaseConfig = {
-      apiKey: "AIzaSyDwzXBKPHk_6MM68W9fGjupP8UckPNSBRQ",
-      authDomain: "hizliyim-3f99c.firebaseapp.com",
-      projectId: "hizliyim-3f99c",
-      storageBucket: "hizliyim-3f99c.appspot.com",
-      messagingSenderId: "333626964299",
-      appId: "1:333626964299:web:1879c6b0a7c89acbd4bff2"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const loginForm = document.getElementById("loginForm");
-      const registerForm = document.getElementById("registerForm");
-      const switchToLogin = document.getElementById("switchToLogin");
-      const switchToRegister = document.getElementById("switchToRegister");
-
-      switchToLogin.onclick = () => {
-        loginForm.classList.add("active");
-        registerForm.classList.remove("active");
-      };
-      switchToRegister.onclick = () => {
-        registerForm.classList.add("active");
-        loginForm.classList.remove("active");
-      };
-
-      // 🟢 Kayıt işlemi
-      registerForm.onsubmit = async (e) => {
-        e.preventDefault();
-        const username = document.getElementById("regUsername").value.trim();
-        const email = document.getElementById("regEmail").value.trim();
-        const password = document.getElementById("regPassword").value;
-
-        if (username.length < 3) return alert("Kullanıcı adı en az 3 karakter olmalı.");
-        if (password.length < 6) return alert("Şifre en az 6 karakter olmalı.");
-
-        try {
-          // E-posta kontrolü
-          const emailQuery = query(collection(db, "users"), where("email", "==", email));
-          const emailSnap = await getDocs(emailQuery);
-          if (!emailSnap.empty) return alert("Bu e-posta zaten kullanılıyor.");
-
-          // Kullanıcı adı kontrolü
-          const usernameQuery = query(collection(db, "users"), where("username", "==", username));
-          const usernameSnap = await getDocs(usernameQuery);
-          if (!usernameSnap.empty) return alert("Bu kullanıcı adı zaten alınmış.");
-
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          const uid = userCredential.user.uid;
-
-          await setDoc(doc(db, "users", uid), {
-            username,
-            email,
-            createdAt: serverTimestamp()
-          });
-
-          alert("Kayıt başarılı! Giriş yapabilirsiniz.");
-          switchToLogin.click();
-        } catch (err) {
-          alert("Hata: " + err.message);
-        }
-      };
-
-      // 🟢 Giriş işlemi
-      loginForm.onsubmit = async (e) => {
-        e.preventDefault();
-        const email = document.getElementById("loginEmail").value.trim();
-        const password = document.getElementById("loginPassword").value;
-
-        try {
-          await signInWithEmailAndPassword(auth, email, password);
-          alert("Giriş başarılı!");
-          // buradan sonra yönlendirme yapabilirsin: window.location.href = "/dashboard.html";
-        } catch (err) {
-          alert("Giriş hatası: " + err.message);
-        }
-      };
-
-      // Sayfa yüklendiğinde login form aktif
-      loginForm.classList.add("active");
-    });
-  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hızlıyım - Giriş Yap</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- 🔐 Giriş Formu -->
-  <form id="loginForm">
-    <h2>Giriş Yap</h2>
-    <input type="email" id="loginEmail" placeholder="E-posta" required>
-    <input type="password" id="loginPassword" placeholder="Şifre" required>
-    <button type="submit">Giriş Yap</button>
-    <p>Hesabınız yok mu? <a href="#" id="switchToRegister">Kayıt Ol</a></p>
-  </form>
+  <div class="login-container">
+    <div class="logo">Hızlıyım 🚀</div>
+    <form class="login-form" id="login-form">
+      <h2>Giriş Yap</h2>
+      <input type="email" id="email" placeholder="E-posta" required />
+      <input type="password" id="password" placeholder="Şifre" required />
+      <button type="submit">Giriş</button>
+      <p class="register-link">Hesabın yok mu? <a href="/register">Kayıt ol</a></p>
+    </form>
+  </div>
 
-  <!-- 📝 Kayıt Formu -->
-  <form id="registerForm">
-    <h2>Kayıt Ol</h2>
-    <input type="text" id="regUsername" placeholder="Kullanıcı Adı" required>
-    <input type="email" id="regEmail" placeholder="E-posta" required>
-    <input type="password" id="regPassword" placeholder="Şifre" required>
-    <button type="submit">Kayıt Ol</button>
-    <p>Zaten hesabınız var mı? <a href="#" id="switchToLogin">Giriş Yap</a></p>
-  </form>
+  <script type="module" src="login.js"></script>
 </body>
 </html>
