@@ -1,24 +1,189 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Hızlıyım - Giriş Yap</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="login-container">
-    <div class="logo">Hızlıyım 🚀</div>
-    <form class="login-form" id="login-form">
-      <h2>Giriş Yap</h2>
-      <input type="email" id="email" placeholder="E-posta" required />
-      <input type="password" id="password" placeholder="Şifre" required />
-      <button type="submit">Giriş</button>
-      <p class="register-link">Hesabın yok mu? <a href="/register">Kayıt ol</a></p>
-    </form>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Karar Verici</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Outfit', sans-serif;
+      }
 
-  <script type="module" src="login.js"></script>
-</body>
+      body {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: white;
+        padding: 20px;
+        overflow-x: hidden;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+        text-align: center;
+        animation: fadeInDown 1s ease forwards;
+      }
+
+      .container {
+        display: flex;
+      }
+
+      .sidebar {
+        width: 280px;
+        margin-right: 30px;
+      }
+
+      .categories {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        animation: fadeInLeft 1s ease forwards;
+      }
+
+      .category-btn {
+        background-color: #334155;
+        border: none;
+        padding: 10px 15px;
+        font-size: 1rem;
+        color: #fff;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+
+      .category-btn:hover {
+        background-color: #475569;
+        transform: scale(1.03);
+      }
+
+      .main {
+        flex: 1;
+      }
+
+      .chosen-category {
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        text-align: center;
+        animation: fadeIn 0.5s ease-in-out;
+      }
+
+      .result-box {
+        background-color: #1e293b;
+        padding: 30px;
+        border-radius: 12px;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+        animation: fadeIn 1s ease-in-out;
+      }
+
+      #result {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+      }
+
+      #choose-btn {
+        background-color: #10b981;
+        border: none;
+        padding: 12px 24px;
+        font-size: 1.1rem;
+        color: #fff;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+      }
+
+      #choose-btn:hover {
+        background-color: #059669;
+        transform: scale(1.05);
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Karar Veremiyorsan Yardımcı Olalım 💡</h1>
+    <div class="container">
+      <div class="sidebar">
+        <div class="categories" id="categories"></div>
+      </div>
+      <div class="main">
+        <div class="chosen-category" id="currentCategory"></div>
+        <div class="result-box">
+          <div id="result">Kategori Seçiniz</div>
+          <button id="choose-btn" disabled>Benim Yerime Seç</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const data = {
+        "Ne Yesem?": ["Pizza", "Burger", "Kebap", "Mantı", "Sushi", "Lahmacun", "Çiğköfte", "Tavuk döner", "Makarna", "Tost", "Salata", "Tavuk kanat"],
+        "Ne İzlesem?": ["Inception", "Interstellar", "The Dark Knight", "Dune", "The Office", "Friends", "Peaky Blinders", "Breaking Bad", "Fight Club", "La Casa de Papel"],
+        "Ne Oynasam?": ["Valorant", "CS2", "GTA V", "Minecraft", "Elden Ring", "League of Legends", "Fortnite", "Terraria", "Rust", "Rocket League"],
+        "Dışarıda Ne Yapayım?": ["Yürüyüşe çık", "Kafeye git", "Kitapçı gez", "Bisiklete bin", "Sahil kenarında otur", "Parkta vakit geçir", "Manzaraya karşı otur"],
+        "Hediye Ne Alsam?": ["Kitap", "Parfüm", "Çiçek", "Kolye", "Saat", "Kupa bardak", "Oyuncak ayı", "Elektronik eşya", "Ajanda"],
+        "Kendime Ne Alsam?": ["Yeni bir kıyafet", "Oyuncak", "Yeni bir kulaklık", "Kitap", "Oyun", "Tatlı bir şey"],
+        "Şu An Ne Yapsam?": ["Film izle", "Kısa bir yürüyüş yap", "Arkadaşını ara", "Yeni müzik keşfet", "Günlük yaz", "Kafanı dinle"],
+        "Nereye Tatile Gidilmeli?": ["Antalya", "Kapadokya", "Muğla", "İzmir", "Fethiye", "Ayvalık", "Sapanca", "Karadeniz turu"],
+        "Günün Kitabı": ["1984", "Hayvan Çiftliği", "Simyacı", "Bülbülü Öldürmek", "Fahrenheit 451", "Yabancı", "Dönüşüm"],
+        "Günün Motive Sözü": ["Pes etme, en iyi anlar zor zamanların ardından gelir.", "Bugün, geri kalan hayatının ilk günü.", "Başarı, azimle gelir.", "Kendine güven!"],
+        // Daha fazla kategori eklersin buraya...
+      };
+
+      const categoriesContainer = document.getElementById("categories");
+      const resultEl = document.getElementById("result");
+      const btn = document.getElementById("choose-btn");
+      const currentCategoryEl = document.getElementById("currentCategory");
+
+      let currentCategory = "";
+
+      Object.keys(data).forEach((category) => {
+        const button = document.createElement("button");
+        button.textContent = category;
+        button.className = "category-btn";
+        button.onclick = () => {
+          currentCategory = category;
+          currentCategoryEl.textContent = `Seçilen Kategori: ${category}`;
+          resultEl.textContent = "";
+          btn.disabled = false;
+        };
+        categoriesContainer.appendChild(button);
+      });
+
+      btn.onclick = () => {
+        resultEl.textContent = "Karar veriliyor...";
+        btn.disabled = true;
+        setTimeout(() => {
+          const items = data[currentCategory];
+          const random = items[Math.floor(Math.random() * items.length)];
+          resultEl.textContent = random;
+          btn.disabled = false;
+        }, 1000);
+      };
+    </script>
+  </body>
 </html>
