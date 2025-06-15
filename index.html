@@ -3,377 +3,46 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Karar Verici | Elit Tasarım</title>
+<title>Basit Bölmeli Sayfa</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
-  /* Genel Ayarlar */
-  * {
-    margin: 0; padding: 0; box-sizing: border-box;
-    font-family: 'Outfit', sans-serif;
+  body, html {
+    margin: 0; padding: 0; height: 100vh; overflow: hidden;
+    font-family: Arial, sans-serif;
   }
-
-  body {
-    background: #fff;
-    color: #111;
-    min-height: 100vh;
-    padding: 25px;
-    transition: background 0.5s ease, color 0.5s ease;
-    overflow-x: hidden;
-    user-select: none;
-  }
-
-  body.dark {
-    background: #10223b;
-    color: #f0e9dc;
-  }
-
-  h1 {
-    font-size: 2.8rem;
-    font-weight: 700;
-    text-align: center;
-    margin-bottom: 25px;
-    letter-spacing: 0.05em;
-    color: inherit;
-    animation: fadeInDown 1s ease forwards;
-  }
-
-  /* Container */
   .container {
-    display: flex;
-    max-width: 960px;
-    margin: 0 auto;
-    background: #f8f8f8;
-    border-radius: 20px;
-    box-shadow:
-      0 10px 15px rgba(0,0,0,0.05),
-      0 4px 6px rgba(0,0,0,0.1);
-    overflow: hidden;
-    transition: background 0.5s ease, color 0.5s ease;
-  }
-
-  body.dark .container {
-    background: #1c2a48;
-    box-shadow:
-      0 10px 15px rgba(0,0,0,0.5),
-      0 4px 6px rgba(0,0,0,0.7);
-  }
-
-  /* Kategori Menü */
-  .sidebar {
-    width: 260px;
-    background: #dde2e7;
-    padding: 20px;
-    border-right: 1px solid #ccc;
-    overflow-y: auto;
-    max-height: 600px;
-    transition: background 0.5s ease, color 0.5s ease;
-  }
-  body.dark .sidebar {
-    background: #14203a;
-    border-color: #3b4a6b;
-  }
-
-  .categories {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .category-btn {
-    background-color: #506cfa;
-    color: white;
-    border: none;
-    padding: 14px 22px;
-    font-size: 1.05rem;
-    font-weight: 600;
-    border-radius: 12px;
-    cursor: pointer;
-    box-shadow: 0 5px 12px rgba(80,108,250,.35);
-    transition:
-      background-color 0.3s ease,
-      transform 0.25s ease,
-      box-shadow 0.3s ease;
-  }
-
-  .category-btn:hover {
-    background-color: #3f55e0;
-    transform: scale(1.07);
-    box-shadow: 0 8px 18px rgba(63,85,224,.5);
-  }
-
-  .category-btn.active {
-    background-color: #0b3ed7;
-    box-shadow: 0 10px 20px rgba(11,62,215,0.7);
-    cursor: default;
-    transform: scale(1.1);
-  }
-
-  /* Main Alan */
-  .main {
-    flex: 1;
-    padding: 40px 30px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 30px;
-  }
-
-  .chosen-category {
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    color: #102a6d;
-    user-select: text;
-    min-height: 2rem;
-    opacity: 0;
-    animation: fadeIn 0.6s ease forwards;
-  }
-  body.dark .chosen-category {
-    color: #b6c6e7;
-  }
-
-  .result-box {
-    background: #506cfa;
-    color: white;
-    padding: 35px 55px;
-    border-radius: 22px;
-    box-shadow:
-      0 15px 30px rgba(80,108,250,0.6);
-    min-width: 320px;
-    min-height: 180px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1.85rem;
-    letter-spacing: 0.04em;
-    text-align: center;
-    transition: background 0.5s ease, color 0.5s ease;
+    height: 100vh;
     position: relative;
   }
-  body.dark .result-box {
-    background: #3f55e0;
-    box-shadow:
-      0 15px 35px rgba(63,85,224,0.7);
+  .upper {
+    height: 50vh;
+    background: white;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    overflow: visible;
   }
-
-  /* Seç Butonu */
-  #choose-btn {
-    margin-top: 28px;
-    background: #1e3ae8;
-    border: none;
-    border-radius: 12px;
-    color: #e0e7ff;
-    font-size: 1.25rem;
-    font-weight: 700;
-    padding: 16px 40px;
-    cursor: pointer;
-    box-shadow:
-      0 8px 15px rgba(30,58,232,0.75);
-    transition:
-      background-color 0.3s ease,
-      box-shadow 0.3s ease,
-      transform 0.25s ease;
+  .upper img {
+    width: 200px;
+    position: relative;
+    z-index: 2;
   }
-
-  #choose-btn:hover:not(:disabled) {
-    background-color: #1435b6;
-    box-shadow:
-      0 10px 20px rgba(20,53,182,0.85);
-    transform: scale(1.07);
-  }
-
-  #choose-btn:disabled {
-    background-color: #7a8afc;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-
-  /* Animasyonlar */
-  @keyframes fadeInDown {
-    from {opacity: 0; transform: translateY(-25px);}
-    to {opacity: 1; transform: translateY(0);}
-  }
-  @keyframes fadeIn {
-    from {opacity: 0; transform: translateY(15px);}
-    to {opacity: 1; transform: translateY(0);}
-  }
-
-  /* Yükleniyor animasyonu */
-  .loading {
-    animation: pulse 1.2s infinite ease-in-out;
-  }
-  @keyframes pulse {
-    0%, 100% {opacity: 1;}
-    50% {opacity: 0.4;}
-  }
-
-  /* Karanlık mod düğmesi */
-  #dark-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: transparent;
-    border: none;
-    font-size: 2.2rem;
-    cursor: pointer;
-    color: #506cfa;
-    transition: color 0.3s ease;
-    user-select: none;
-  }
-  #dark-toggle:hover {
-    color: #1e3ae8;
-  }
-  body.dark #dark-toggle {
-    color: #f0e9dc;
-  }
-
-  /* Scroll bar sidebar için */
-  .sidebar::-webkit-scrollbar {
-    width: 7px;
-  }
-  .sidebar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .sidebar::-webkit-scrollbar-thumb {
-    background: #506cfa;
-    border-radius: 10px;
-  }
-  body.dark .sidebar::-webkit-scrollbar-thumb {
-    background: #3f55e0;
-  }
-
-  /* Responsive */
-  @media (max-width: 720px) {
-    .container {
-      flex-direction: column;
-      max-width: 100%;
-      border-radius: 0;
-      box-shadow: none;
-    }
-    .sidebar {
-      width: 100%;
-      max-height: 160px;
-      border-right: none;
-      border-bottom: 1px solid #ccc;
-      display: flex;
-      overflow-x: auto;
-      padding: 10px 15px;
-    }
-    .category-btn {
-      flex-shrink: 0;
-      padding: 10px 18px;
-      font-size: 0.9rem;
-    }
-    .main {
-      padding: 25px 20px;
-    }
-    #choose-btn {
-      width: 100%;
-    }
+  .lower {
+    height: 50vh;
+    background: linear-gradient(to bottom, transparent 0%, #4a90e2 100%);
+    position: relative;
+    margin-top: -60px; /* Gifin biraz altına overlap yapması için */
+    z-index: 1;
   }
 </style>
 </head>
 <body>
-<button id="dark-toggle" title="Karanlık Mod / Açık Mod">☀️</button>
-<h1>Karar Veremiyorsan Yardımcı Olalım 💡</h1>
-<div class="container">
-  <div class="sidebar">
-    <div class="categories" id="categories"></div>
-  </div>
-  <div class="main">
-    <div class="chosen-category" id="currentCategory"></div>
-    <div class="result-box" id="resultBox">
-      <div id="result">Kategori Seçiniz</div>
-      <button id="choose-btn" disabled>Benim Yerime Seç</button>
+  <div class="container">
+    <div class="upper">
+      <!-- Gif buraya -->
+      <img src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" alt="Gif" />
     </div>
+    <div class="lower"></div>
   </div>
-</div>
-
-<script>
-  const data = {
-    "Ne Yesem?": ["Pizza", "Burger", "Kebap", "Mantı", "Sushi", "Lahmacun", "Çiğköfte", "Tavuk döner", "Makarna", "Tost", "Salata", "Tavuk kanat"],
-    "Ne İzlesem?": ["Inception", "Interstellar", "The Dark Knight", "Dune", "The Office", "Friends", "Peaky Blinders", "Breaking Bad", "Fight Club", "La Casa de Papel"],
-    "Ne Oynasam?": ["Valorant", "CS2", "GTA V", "Minecraft", "Elden Ring", "League of Legends", "Fortnite", "Terraria", "Rust", "Rocket League"],
-    "Dışarıda Ne Yapayım?": ["Yürüyüşe çık", "Kafeye git", "Kitapçı gez", "Bisiklete bin", "Sahil kenarında otur", "Parkta vakit geçir", "Manzaraya karşı otur"],
-    "Hediye Ne Alsam?": ["Kitap", "Parfüm", "Çiçek", "Kolye", "Saat", "Kupa bardak", "Oyuncak ayı", "Elektronik eşya", "Ajanda"],
-    "Kendime Ne Alsam?": ["Yeni bir kıyafet", "Oyuncak", "Yeni bir kulaklık", "Kitap", "Oyun", "Tatlı bir şey"],
-    "Şu An Ne Yapsam?": ["Film izle", "Kısa bir yürüyüş yap", "Arkadaşını ara", "Yeni müzik keşfet", "Günlük yaz", "Kafanı dinle"],
-    "Nereye Tatile Gidilmeli?": ["Antalya", "Kapadokya", "Muğla", "İzmir", "Fethiye", "Ayvalık", "Sapanca", "Karadeniz turu"],
-    "Günün Kitabı": ["1984", "Hayvan Çiftliği", "Simyacı", "Bülbülü Öldürmek", "Fahrenheit 451", "Yabancı", "Dönüşüm"],
-    "Günün Motive Sözü": ["Pes etme, en iyi anlar zor zamanların ardından gelir.", "Bugün, geri kalan hayatının ilk günü.", "Başarı, azimle gelir.", "Kendine güven!"],
-    "Favori Müzik Türü": ["Pop", "Rock", "Jazz", "Klasik", "Rap", "Elektronik", "Türkçe Pop", "Metal", "Hip-hop", "Blues"],
-    "Seyahat Etmek İstediğin Yer": ["Paris", "New York", "Tokyo", "Roma", "Sidney", "Barselona", "Dubai", "Moskova", "Amsterdam", "Viyana"],
-    "Hangi Spor Yapmalı?": ["Yüzme", "Koşu", "Yoga", "Fitness", "Bisiklet", "Pilates", "Tenis", "Basketbol", "Futbol", "Dalgıçlık"],
-    "Hangi Hobiye Başlamalıyım?": ["Resim", "Fotoğrafçılık", "Müzik aleti çalmak", "Yazarlık", "Bahçecilik", "Dans", "Kodlama", "Origami", "Model Uçak", "Astronomi"],
-    "En Sevdiğin Tatil Tipi": ["Deniz tatili", "Doğa yürüyüşü", "Kültür turu", "Kayak", "Şehir turu", "Kamp", "Gurme turu", "Spa tatili"],
-    "Favori Renk": ["Mavi", "Kırmızı", "Siyah", "Beyaz", "Yeşil", "Sarı", "Mor", "Turuncu", "Pembe", "Gri"],
-    "Okunacak Kitap Türü": ["Roman", "Bilim Kurgu", "Kişisel Gelişim", "Tarih", "Felsefe", "Polisiye", "Fantastik", "Şiir"],
-    "Film Türü": ["Aksiyon", "Komedi", "Dram", "Korku", "Bilim Kurgu", "Romantik", "Belgesel"],
-    "Yemek Türü": ["Türk Mutfağı", "İtalyan", "Japon", "Meksika", "Fransız", "Çin", "Hint"],
-    "Teknoloji Tercihi": ["Android", "iOS", "Windows", "Linux", "MacOS"],
-    "En Sevdiğin Mevsim": ["Yaz", "Kış", "İlkbahar", "Sonbahar"],
-  };
-
-  const categoriesContainer = document.getElementById("categories");
-  const resultEl = document.getElementById("result");
-  const btn = document.getElementById("choose-btn");
-  const currentCategoryEl = document.getElementById("currentCategory");
-
-  let currentCategory = "";
-
-  // Kategorileri sidebar'a ekle
-  Object.keys(data).forEach(category => {
-    const btnCat = document.createElement("button");
-    btnCat.textContent = category;
-    btnCat.className = "category-btn";
-    btnCat.onclick = () => {
-      // Aktif butonu ayarla
-      document.querySelectorAll(".category-btn").forEach(b => b.classList.remove("active"));
-      btnCat.classList.add("active");
-
-      currentCategory = category;
-      currentCategoryEl.textContent = `Seçilen Kategori: ${category}`;
-      currentCategoryEl.style.opacity = "0";
-      setTimeout(() => {
-        currentCategoryEl.style.opacity = "1";
-      }, 50);
-
-      resultEl.textContent = "";
-      btn.disabled = false;
-    };
-    categoriesContainer.appendChild(btnCat);
-  });
-
-  btn.onclick = () => {
-    if(!currentCategory) return;
-    resultEl.textContent = "Karar veriliyor...";
-    resultEl.classList.add("loading");
-    btn.disabled = true;
-
-    setTimeout(() => {
-      const items = data[currentCategory];
-      const randomItem = items[Math.floor(Math.random() * items.length)];
-      resultEl.textContent = randomItem;
-      resultEl.classList.remove("loading");
-      btn.disabled = false;
-    }, 1500);
-  };
-
-  // Karanlık mod toggle butonu
-  const darkToggleBtn = document.getElementById("dark-toggle");
-  darkToggleBtn.onclick = () => {
-    document.body.classList.toggle("dark");
-    if(document.body.classList.contains("dark")){
-      darkToggleBtn.textContent = "🌙";
-      darkToggleBtn.title = "Açık Mod";
-    } else {
-      darkToggleBtn.textContent = "☀️";
-      darkToggleBtn.title = "Karanlık Mod";
-    }
-  };
-</script>
 </body>
 </html>
