@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Basit Bölmeli Sayfa</title>
+<title>Keskin Geçişli Sayfa</title>
 <style>
   body, html {
     margin: 0; padding: 0; height: 100vh; overflow: hidden;
@@ -29,9 +29,9 @@
   }
   .lower {
     height: 50vh;
-    background: linear-gradient(to bottom, transparent 0%, #4a90e2 100%);
+    background-color: #4a90e2; /* Keskin mavi arka plan */
     position: relative;
-    margin-top: -60px; /* Gifin altından mavi başlasın diye */
+    margin-top: -60px; /* Gif altından mavi başlasın */
     z-index: 1;
   }
 </style>
@@ -39,7 +39,6 @@
 <body>
   <div class="container">
     <div class="upper">
-      <!-- Github raw linkinden gif -->
       <img src="https://raw.githubusercontent.com/aliclkk00/forum/main/gif.gif" alt="Gif" />
     </div>
     <div class="lower"></div>
