@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Sayfa Bulunamadı</title>
+    <style>
+        /* --- GENEL AYARLAR --- */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden; /* Kaydırma çubuklarını gizle */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- ARKA PLAN YILDIZLAR (CANVAS İÇİN) --- */
+        #star-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+        }
+
+        /* --- ÜST BAŞLIK (hizliyim.com) --- */
+        .top-header {
+            position: absolute;
+            top: 30px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 10;
+            letter-spacing: 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: #00d2ff;
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.7);
+            text-transform: uppercase;
+        }
+
+        /* --- KAYAN YAZI (MARQUEE) --- */
+        .marquee-container {
+            position: absolute;
+            top: 70px;
+            width: 100%;
+            overflow: hidden;
+            opacity: 0.5;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 5px 0;
+        }
+
+        .marquee-content {
+            display: inline-block;
+            animation: marquee 20s linear infinite;
+            padding-left: 100%;
+            color: #a8a8a8;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* --- ANA İÇERİK KUTUSU --- */
+        .container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+
+        /* --- GLITCH 404 EFEKTİ --- */
+        .glitch-wrapper {
+            position: relative;
+            font-size: 12rem; /* Dev yazı boyutu */
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            line-height: 1;
+            user-select: none;
+        }
+
+        .glitch {
+            position: relative;
+            color: #fff;
+            z-index: 1;
+        }
+
+        /* Glitch Katmanları (Kırmızı ve Mavi Kaymalar) */
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505; /* Arka planla aynı renk */
+        }
+
+        .glitch::before {
+            left: 2px;
+            text-shadow: -2px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+            z-index: -1;
+        }
+
+        .glitch::after {
+            left: -2px;
+            text-shadow: -2px 0 #00fff9;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+            z-index: -2;
+        }
+
+        /* --- TARAYICI IŞIĞI (SCANNER BEAM) --- */
+        .scanner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, transparent 45%, rgba(255, 255, 255, 0.1) 50%, transparent 55%);
+            animation: scan 4s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 10;
+            mix-blend-mode: overlay;
+        }
+        
+        /* Scanner'ın ortasındaki parlak çizgi */
+        .scanner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px 2px rgba(100, 200, 255, 0.8);
+            transform: translateX(-50%);
+        }
+
+        @keyframes scan {
+            0% { transform: translateX(-150px) scaleX(0); opacity: 0; }
+            10% { opacity: 1; transform: translateX(-100px) scaleX(1); }
+            90% { opacity: 1; transform: translateX(100px) scaleX(1); }
+            100% { transform: translateX(150px) scaleX(0); opacity: 0; }
+        }
+
+        /* --- ALT METİN VE BUTON --- */
+        .message {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #ccc;
+            text-align: center;
+        }
+
+        .btn-home {
+            margin-top: 40px;
+            padding: 15px 40px;
+            background: transparent;
+            border: 2px solid #00d2ff;
+            color: #00d2ff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        .btn-home:hover {
+            background: #00d2ff;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.8);
+        }
+
+        /* --- GLITCH KEYFRAMES --- */
+        @keyframes glitch-anim {
+            0% { clip: rect(34px, 9999px, 11px, 0); }
+            20% { clip: rect(86px, 9999px, 93px, 0); }
+            40% { clip: rect(20px, 9999px, 67px, 0); }
+            60% { clip: rect(5px, 9999px, 38px, 0); }
+            80% { clip: rect(72px, 9999px, 84px, 0); }
+            100% { clip: rect(15px, 9999px, 49px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(2px, 9999px, 88px, 0); }
+            20% { clip: rect(55px, 9999px, 14px, 0); }
+            40% { clip: rect(33px, 9999px, 2px, 0); }
+            60% { clip: rect(90px, 9999px, 46px, 0); }
+            80% { clip: rect(12px, 9999px, 65px, 0); }
+            100% { clip: rect(48px, 9999px, 29px, 0); }
+        }
+
+        /* Mobil Uyumluluk */
+        @media (max-width: 768px) {
+            .glitch-wrapper { font-size: 6rem; }
+            .message { font-size: 1rem; }
+            .top-header { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="star-canvas"></canvas>
+
+    <div class="top-header">hizliyim.com</div>
+
+    <div class="marquee-container">
+        <div class="marquee-content">
+            // SİSTEM HATASI // ROTA HESAPLANIYOR // YILDIZLAR ARASINDA KAYBOLDUNUZ // BAĞLANTI KOPUKLUĞU TESPİT EDİLDİ // 
+            ERROR 404 // SAYFA BULUNAMADI // LÜTFEN ANA ÜSSE GERİ DÖNÜN //
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="glitch-wrapper">
+            <div class="scanner"></div>
+            <div class="glitch" data-text="404">404</div>
+        </div>
+
+        <div class="message">
+            Üzgünüz, uzay boşluğunda kayboldun.
+        </div>
+
+        <a href="/" class="btn-home">
+            Ana Sayfaya Işınlan
+        </a>
+    </div>
+
+    <script>
+        // --- YILDIZ EFEKTİ SCRİPTİ ---
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let stars = [];
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            createStars();
+        }
+
+        function createStars() {
+            stars = [];
+            const starCount = 200; // Yıldız sayısı
+            for (let i = 0; i < starCount; i++) {
+                stars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: Math.random() * 2,
+                    speed: Math.random() * 0.5
+                });
+            }
+        }
+
+        function animateStars() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'white';
+            
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Yıldızları yavaşça yukarı kaydır (Uzay hissi)
+                star.y -= star.speed;
+                if (star.y < 0) {
+                    star.y = height;
+                    star.x = Math.random() * width;
+                }
+            });
+
+            requestAnimationFrame(animateStars);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        animateStars();
+    </script>
+</body>
+</html>
