@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Hız Limitini Aştın!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Orbitron', sans-serif;
+            color: white;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: none; /* Özel cursor kullanacağız */
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            pointer-events: none; /* Mouse arkadaki canvas'ı etkilesin diye */
+        }
+
+        h1 {
+            font-size: 12rem;
+            margin: 0;
+            line-height: 1;
+            font-weight: 900;
+            color: transparent;
+            -webkit-text-stroke: 2px #0ff;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            animation: glitch 2s infinite;
+            letter-spacing: -10px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-top: -20px;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px #f0f;
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            pointer-events: auto;
+            display: inline-block;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            color: #000;
+            background: #0ff;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 50px;
+            box-shadow: 0 0 20px #0ff, 0 0 50px #0ff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .btn:hover {
+            background: transparent;
+            color: #0ff;
+            border: 2px solid #0ff;
+            box-shadow: 0 0 10px #0ff, inset 0 0 20px #0ff;
+            transform: scale(1.1);
+        }
+
+        /* Custom Cursor */
+        #cursor {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid #f0f;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 999;
+            transition: width 0.1s, height 0.1s;
+            mix-blend-mode: difference;
+        }
+
+        #cursor::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            background: #f0f;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Glitch Animation */
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); text-shadow: 2px 0 #f0f, -2px 0 #0ff; }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); text-shadow: -2px 0 #f0f, 2px 0 #0ff; }
+            100% { transform: translate(0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="cursor"></div>
+
+    <canvas id="canvas-container"></canvas>
+
+    <div class="content">
+        <h1>404</h1>
+        <h2>Çok Hızlıydın!</h2>
+        <p>O kadar hızlı gittin ki, sayfa yüklenmeden boyut değiştirdik.</p>
+        <a href="/" class="btn">ANA YOLA DÖN</a>
+    </div>
+
+    <script>
+        /**
+         * HIZLIYIM.COM - WARP SPEED EFFECT
+         * HTML5 Canvas Starfield
+         */
+        const canvas = document.getElementById('canvas-container');
+        const ctx = canvas.getContext('2d');
+        const cursor = document.getElementById('cursor');
+
+        let width, height;
+        let stars = [];
+        let speed = 20; // Başlangıç hızı
+        let mouseX = 0;
+        let mouseY = 0;
+
+        // Sayfa boyutunu ayarla
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            createStars(); // Yeniden oluştur
+        }
+
+        // Yıldız Sınıfı
+        class Star {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = (Math.random() * width - width / 2) * 20; // Geniş alana yay
+                this.y = (Math.random() * height - height / 2) * 20;
+                this.z = Math.random() * 2000 + 1000; // Derinlik
+                this.px = 0;
+                this.py = 0;
+            }
+
+            update() {
+                // Hız mouse hareketine göre değişsin (Etkileşim!)
+                // Mouse merkezden uzaklaştıkça hız artar
+                let speedFactor = (Math.abs(mouseX) + Math.abs(mouseY)) / 500;
+                let currentSpeed = speed + (speedFactor * 30);
+
+                this.z -= currentSpeed;
+
+                if (this.z <= 0) {
+                    this.reset();
+                    this.z = 2000; // Tekrar en arkaya at
+                }
+            }
+
+            draw() {
+                // Perspektif matematiği
+                let sx = (this.x / this.z) * 1000 + (width / 2) + (mouseX * 0.05);
+                let sy = (this.y / this.z) * 1000 + (height / 2) + (mouseY * 0.05);
+
+                // Önceki pozisyonu (Hız izi / Trail efekti için)
+                // Yıldız ne kadar yakınsa o kadar büyük ve parlak
+                let size = (1 - this.z / 2000) * 4;
+                
+                ctx.beginPath();
+                ctx.fillStyle = `rgba(255, 255, 255, ${1 - this.z / 2000})`;
+                ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Hız çizgisi (Warp etkisi)
+                if (this.z < 1500) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(0, 255, 255, ${0.5 - (this.z / 3000)})`;
+                    ctx.lineWidth = size;
+                    ctx.moveTo(sx, sy);
+                    // Çizginin kuyruğu merkeze doğru uzar
+                    let oldX = (this.x / (this.z + 100)) * 1000 + (width / 2);
+                    let oldY = (this.y / (this.z + 100)) * 1000 + (height / 2);
+                    ctx.lineTo(oldX, oldY);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function createStars() {
+            stars = [];
+            for (let i = 0; i < 600; i++) { // Yıldız sayısı
+                stars.push(new Star());
+            }
+        }
+
+        function animate() {
+            // Arka plan temizliği (hafif iz bırakarak akıcılık sağlar)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.fillRect(0, 0, width, height);
+
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Mouse Takibi
+        document.addEventListener('mousemove', (e) => {
+            // Koordinatları merkeze göre ayarla
+            mouseX = e.clientX - width / 2;
+            mouseY = e.clientY - height / 2;
+
+            // Custom Cursor hareketi
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            // Butonların üzerine gelince cursor büyüsün
+            if(e.target.tagName === 'A') {
+                cursor.style.width = '80px';
+                cursor.style.height = '80px';
+                cursor.style.border = '2px solid #0ff';
+            } else {
+                cursor.style.width = '40px';
+                cursor.style.height = '40px';
+                cursor.style.border = '2px solid #f0f';
+            }
+        });
+
+        window.addEventListener('resize', resize);
+
+        // Başlat
+        resize();
+        animate();
+
+    </script>
+</body>
+</html>
