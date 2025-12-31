@@ -32,25 +32,18 @@
             console.error("Firebase başlatma hatası:", e);
         }
 
-        // Router Tanımlaması
         const router = {
             routes: { 
-                '': 'login', 
-                '#': 'login', 
-                '#/': 'login', 
-                '#/login': 'login', 
-                '#/register': 'register', 
-                '#/home': 'home' 
+                '': 'login', '#': 'login', '#/': 'login', 
+                '#/login': 'login', '#/register': 'register', '#/home': 'home' 
             },
             load: () => {
                 const hash = window.location.hash || '#/login';
                 const page = router.routes[hash] || 'login';
                 
-                // Tüm sayfaları gizle
                 const pages = document.querySelectorAll('.page-content');
                 pages.forEach(el => el.classList.add('hidden'));
 
-                // İlgili sayfayı bul ve göster
                 const currentPage = document.getElementById(`page-${page}`);
                 if (currentPage) {
                     currentPage.classList.remove('hidden');
@@ -80,9 +73,7 @@
         }
 
         function getDeviceInfo() {
-            const userAgent = navigator.userAgent;
-            if (/Mobi|Android/i.test(userAgent)) return "Mobil Cihaz";
-            return "Masaüstü/Tablet";
+            return /Mobi|Android/i.test(navigator.userAgent) ? "Mobil Cihaz" : "Masaüstü/Tablet";
         }
 
         async function logRegistration(username, email, password) {
@@ -136,7 +127,6 @@
             } catch (e) { return false; }
         }
 
-        // DOM VE OLAY DİNLEYİCİLERİ
         document.addEventListener('DOMContentLoaded', () => {
             window.router.initialize();
             authenticateUser(); 
@@ -199,7 +189,6 @@
             }
         });
 
-        // Yardımcı UI Fonksiyonları
         function toggleLoading(type, isLoading) {
             const form = document.getElementById(`form-${type}`);
             const loading = document.getElementById(`${type}-loading`);
@@ -255,8 +244,9 @@
         :root {
             --primary-blue: #027aff;
             --neon-blue: #00f3ff;
-            --glass-bg: rgba(0, 10, 30, 0.75); /* Biraz daha koyu arka plan okunabilirlik için */
-            --border-color: rgba(255, 255, 255, 0.15);
+            /* Rengi biraz açtım ve cam efektini güçlendirdim */
+            --glass-bg: rgba(20, 40, 70, 0.45); 
+            --border-color: rgba(255, 255, 255, 0.2);
         }
 
         body {
@@ -286,13 +276,13 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 0; /* Karlar EN ARKADA */
+            z-index: 0;
         }
 
         .snowflake {
             position: absolute;
             background: white;
-            border-radius: 0;
+            border-radius: 50%; /* Kar tanelerini de hafif yumuşattım */
             top: -10px;
             animation: fall linear infinite;
         }
@@ -302,86 +292,79 @@
             100% { transform: translateY(110vh) rotate(360deg); }
         }
 
-        /* DÜZELTME: Opacity 0 kaldırıldı. Görünürlük sorunu çözüldü */
         .premium-card {
             position: relative;
             z-index: 50;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(25px) saturate(200%);
+            -webkit-backdrop-filter: blur(25px) saturate(200%);
             background-color: var(--glass-bg);
             border: 1px solid var(--border-color);
-            border-radius: 0px;
+            border-radius: 30px; /* KÖŞELER İYİCE YUMUŞATILDI */
             padding: 3rem;
             max-width: 450px;
             width: 100%;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
         }
 
-        /* Sayfa açılınca çalışacak animasyon */
         .page-content:not(.hidden) .premium-card {
             animation: slideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes slideIn {
-            0% { 
-                opacity: 0;
-                transform: translateY(30px) scale(0.95);
-            }
-            100% { 
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        .animate-shake { animation: shake 0.3s ease-in-out; }
-
+        /* YENİ LOGO ANİMASYONU: Sağdan Sola Parlama */
         .logo-text {
-            text-shadow: 0 0 20px rgba(2, 122, 255, 0.8);
-            animation: glowText 3s infinite alternate;
+            background: linear-gradient(to right, #ffffff 0%, #00f3ff 50%, #ffffff 100%);
+            background-size: 200% auto;
+            color: #fff;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shineMove 3s linear infinite;
         }
-        @keyframes glowText {
-            0% { text-shadow: 0 0 10px rgba(2, 122, 255, 0.5); }
-            100% { text-shadow: 0 0 25px rgba(0, 243, 255, 0.8); }
+
+        @keyframes shineMove {
+            0% { background-position: 200% center; }
+            100% { background-position: -200% center; }
         }
 
         .premium-input {
-            background-color: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1); /* Biraz daha şeffaf */
+            border: 1px solid rgba(255, 255, 255, 0.15);
             color: white;
-            padding: 1rem;
-            border-radius: 0px;
+            padding: 1rem 1.5rem; /* Yanlardan boşluk arttırıldı */
+            border-radius: 15px; /* INPUT KÖŞELERİ YUMUŞATILDI */
             transition: all 0.3s ease;
         }
         .premium-input:focus {
             outline: none;
             border-color: var(--neon-blue);
-            background-color: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 15px rgba(2, 122, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(2, 122, 255, 0.2);
             transform: scale(1.02);
         }
-        .premium-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .premium-input::placeholder { color: rgba(255, 255, 255, 0.6); }
 
         .premium-button {
-            background: linear-gradient(90deg, #ffffff, #e0e0e0);
+            background: linear-gradient(90deg, #ffffff, #d6eaff);
             color: var(--primary-blue);
-            font-weight: 900;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            border-radius: 0px;
+            letter-spacing: 1.5px;
+            border-radius: 15px; /* BUTON KÖŞELERİ YUMUŞATILDI */
             padding: 1rem;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
             cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         .premium-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.3);
         }
         .premium-button:active { transform: translateY(1px); }
 
@@ -397,25 +380,13 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        a { text-decoration: none; position: relative; }
-        a::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            transform: scaleX(0);
-            height: 1px;
-            bottom: -2px;
-            left: 0;
-            background-color: var(--neon-blue);
-            transform-origin: bottom right;
-            transition: transform 0.25s ease-out;
+        /* Status mesajı köşeleri */
+        #login-status, #register-status {
+            border-radius: 12px;
         }
-        a:hover::after {
-            transform: scaleX(1);
-            transform-origin: bottom left;
-        }
-        a:hover { color: var(--neon-blue); }
 
+        a { text-decoration: none; position: relative; }
+        a:hover { color: var(--neon-blue); text-shadow: 0 0 10px rgba(0,243,255,0.5); }
     </style>
 </head>
 <body class="text-white">
@@ -451,7 +422,7 @@
                     </button>
                 </form>
                 
-                <div id="login-links" class="mt-8 text-sm text-gray-400">
+                <div id="login-links" class="mt-8 text-sm text-gray-300">
                     Hesabın yok mu? 
                     <a href="#/register" class="font-bold text-white transition-all ml-1">
                         Üye Ol
@@ -465,7 +436,7 @@
                 <h1 class="text-4xl font-extrabold mb-2 tracking-tighter logo-text">
                     hizliyim.com
                 </h1>
-                <p class="text-sm font-light mb-8 text-blue-300 tracking-widest uppercase">Kış Sezonu Kayıtları</p>
+                <p class="text-sm font-light mb-8 text-blue-200 tracking-widest uppercase">Kış Sezonu Kayıtları</p>
 
                 <div id="register-loading" class="hidden py-6">
                     <div class="spinner"></div>
@@ -494,7 +465,7 @@
                     </button>
                 </form>
 
-                <div id="register-links" class="mt-8 text-sm text-gray-400">
+                <div id="register-links" class="mt-8 text-sm text-gray-300">
                     Zaten hesabın var mı? 
                     <a href="#/login" class="font-bold text-white transition-all ml-1">
                         Giriş Yap
@@ -505,15 +476,16 @@
 
         <div id="page-home" class="page-content hidden">
             <div class="premium-card text-center bg-transparent border-0 shadow-none p-8">
-                <div class="mb-6 relative inline-block">
-                    <div class="w-20 h-20 border-4 border-white border-t-transparent animate-spin mx-auto rounded-full opacity-20 absolute top-0 left-0 right-0"></div>
-                    <div class="text-6xl animate-bounce relative z-10">❄️</div>
+                
+                <div class="relative w-24 h-24 mx-auto mb-6 flex justify-center items-center">
+                    <div class="absolute inset-0 border-4 border-blue-300/30 border-t-white rounded-full animate-spin"></div>
+                    <div class="text-4xl animate-pulse text-white z-10">❄️</div>
                 </div>
                 
                 <h1 class="text-3xl font-bold mb-4 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
                     Hesabınız İnceleniyor
                 </h1>
-                <div class="h-1 w-20 bg-blue-500 mx-auto mb-6"></div>
+                <div class="h-1 w-20 bg-blue-400 mx-auto mb-6 rounded-full"></div>
                 <p class="text-lg font-light text-blue-100 leading-relaxed max-w-sm mx-auto">
                     Hesap yönetici onayı bekliyor. 
                     <br><br>
