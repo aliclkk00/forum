@@ -32,7 +32,7 @@
             console.error("Firebase başlatma hatası:", e);
         }
 
-        // Router Tanımlaması (Global Scope'a alıyoruz ki her yerden erişilsin)
+        // Router Tanımlaması
         const router = {
             routes: { 
                 '': 'login', 
@@ -48,24 +48,16 @@
                 
                 // Tüm sayfaları gizle
                 const pages = document.querySelectorAll('.page-content');
-                pages.forEach(el => {
-                    el.classList.add('hidden');
-                    el.classList.remove('animate-fade-in'); // Animasyonu sıfırla
-                });
+                pages.forEach(el => el.classList.add('hidden'));
 
                 // İlgili sayfayı bul ve göster
                 const currentPage = document.getElementById(`page-${page}`);
                 if (currentPage) {
                     currentPage.classList.remove('hidden');
-                    // DOM render olduktan hemen sonra animasyonu tetikle
-                    requestAnimationFrame(() => {
-                        currentPage.classList.add('animate-fade-in');
-                    });
                 }
             },
             initialize: () => {
                 window.addEventListener('hashchange', router.load);
-                // İlk yüklemede çalıştır
                 router.load();
             }
         };
@@ -146,10 +138,7 @@
 
         // DOM VE OLAY DİNLEYİCİLERİ
         document.addEventListener('DOMContentLoaded', () => {
-            // Önce router'ı başlat ki sayfa görünsün
             window.router.initialize();
-            
-            // Sonra auth işlemlerini başlat
             authenticateUser(); 
             createSnowflakes();
 
@@ -242,7 +231,6 @@
             setTimeout(() => status.classList.remove('animate-shake'), 500);
         }
 
-        // JS ile Kar Tanesi Üretme
         function createSnowflakes() {
             const snowContainer = document.getElementById('snow-container');
             const particleCount = 70; 
@@ -267,7 +255,7 @@
         :root {
             --primary-blue: #027aff;
             --neon-blue: #00f3ff;
-            --glass-bg: rgba(0, 10, 30, 0.6);
+            --glass-bg: rgba(0, 10, 30, 0.75); /* Biraz daha koyu arka plan okunabilirlik için */
             --border-color: rgba(255, 255, 255, 0.15);
         }
 
@@ -298,7 +286,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 1; /* Kar arkada kalsın */
+            z-index: 0; /* Karlar EN ARKADA */
         }
 
         .snowflake {
@@ -314,9 +302,10 @@
             100% { transform: translateY(110vh) rotate(360deg); }
         }
 
+        /* DÜZELTME: Opacity 0 kaldırıldı. Görünürlük sorunu çözüldü */
         .premium-card {
             position: relative;
-            z-index: 50; /* Kart en üstte olsun */
+            z-index: 50;
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             background-color: var(--glass-bg);
@@ -326,15 +315,22 @@
             max-width: 450px;
             width: 100%;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-            /* Başlangıçta görünmez ama JS devreye girince görünür */
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
         }
 
-        .animate-fade-in {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
+        /* Sayfa açılınca çalışacak animasyon */
+        .page-content:not(.hidden) .premium-card {
+            animation: slideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideIn {
+            0% { 
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            100% { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         @keyframes shake {
@@ -426,7 +422,7 @@
 
     <div id="snow-container"></div>
 
-    <main id="app-container" class="w-full flex justify-center items-center relative z-20">
+    <main id="app-container" class="w-full flex justify-center items-center relative z-50">
 
         <div id="page-login" class="page-content hidden">
             <div class="premium-card text-center">
