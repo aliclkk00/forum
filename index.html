@@ -61,14 +61,14 @@
             const userRef = doc(window.db, "users", email.toLowerCase());
              try {
                 const docSnap = await getDoc(userRef);
-                if (docSnap.exists()) return { success: false, message: "Bu e-posta zaten kayıtlı." };
+                if (docSnap.exists()) return { success: false, message: "Bu e-posta zaten kayıtlı balımmmm." };
 
                 await setDoc(userRef, {
                     username, email: email.toLowerCase(), password, 
                     createdAt: new Date().toISOString(), status: 'pending'
                 });
                 return { success: true };
-            } catch (e) { return { success: false, message: "Hata oluştu." }; }
+            } catch (e) { return { success: false, message: "Bir hata oluştu." }; }
         }
 
         async function verifyLoginCredentials(email, password) {
@@ -93,6 +93,9 @@
                     currentPage.classList.remove('hidden');
                     currentPage.classList.add('animate-pop-in');
                 }
+                // Hata mesajlarını temizle sayfa değişince
+                hideError('login');
+                hideError('register');
             },
             initialize: () => {
                 window.addEventListener('hashchange', router.load);
@@ -104,15 +107,17 @@
         // --- DOM Ready ---
         document.addEventListener('DOMContentLoaded', () => {
             authenticateUser(); 
-            initNightSkyEffects();
-            initStaticStars();
+            initNightSkyEffects(); // Optimize edildi
+            initStaticStars();     // Optimize edildi
 
             // Login
             const formLogin = document.getElementById('form-login');
             if (formLogin) {
                 formLogin.addEventListener('submit', async (e) => {
                     e.preventDefault();
+                    hideError('login');
                     toggleLoading('login', true);
+                    
                     const email = document.getElementById('login-email').value.trim();
                     const password = document.getElementById('login-password').value;
                     const success = await verifyLoginCredentials(email, password);
@@ -122,10 +127,10 @@
                             window.location.hash = '#/home';
                             formLogin.reset();
                             toggleLoading('login', false);
-                        }, 1000);
+                        }, 800);
                     } else {
                         toggleLoading('login', false);
-                        alert("Giriş bilgileri hatalı");
+                        showError('login', "Giriş bilgileri hatalı, tekrar dene");
                     }
                 });
             }
@@ -135,9 +140,14 @@
             if (formRegister) {
                 formRegister.addEventListener('submit', async (e) => {
                     e.preventDefault();
+                    hideError('register');
+
                     const pass = document.getElementById('register-password').value;
                     const confirm = document.getElementById('register-confirm-password').value;
-                    if (pass !== confirm) { alert("Şifreler uyuşmuyor!"); return; }
+                    if (pass !== confirm) { 
+                        showError('register', "Hatalı giriş"); 
+                        return; 
+                    }
 
                     toggleLoading('register', true);
                     const result = await saveRegistrationData(
@@ -154,37 +164,57 @@
                         }, 1500);
                     } else {
                         toggleLoading('register', false);
-                        alert(result.message);
+                        showError('register', result.message);
                     }
                 });
             }
         });
 
+        // Yardımcı Fonksiyonlar
         function toggleLoading(type, isLoading) {
             const form = document.getElementById(`form-${type}`);
             const loading = document.getElementById(`${type}-loading`);
             const links = document.getElementById(`${type}-links`);
+            
+            // Yükleniyor durumunda sadece butonu deaktif edip spinner gösterelim
+            // Formu tamamen gizlemek yerine opaklığını düşürebiliriz (daha modern)
             if (isLoading) {
-                form.classList.add('hidden');
+                form.classList.add('opacity-50', 'pointer-events-none');
                 links.classList.add('hidden');
                 loading.classList.remove('hidden');
             } else {
-                form.classList.remove('hidden');
+                form.classList.remove('opacity-50', 'pointer-events-none');
                 links.classList.remove('hidden');
                 loading.classList.add('hidden');
             }
         }
 
-        // --- Visual Effects ---
+        function showError(type, message) {
+            const errorBox = document.getElementById(`${type}-error`);
+            errorBox.textContent = message;
+            errorBox.classList.remove('hidden');
+            errorBox.classList.add('animate-shake');
+            setTimeout(() => errorBox.classList.remove('animate-shake'), 500);
+        }
+
+        function hideError(type) {
+            const errorBox = document.getElementById(`${type}-error`);
+            if(errorBox) errorBox.classList.add('hidden');
+        }
+
+        // --- Visual Effects (OPTİMİZE EDİLDİ) ---
+        // Daha az element, daha az sıklık = Yüksek Performans
         function initNightSkyEffects() {
             const container = document.getElementById('sky-effects-container');
-            setInterval(() => createStar(container, 'shooting-star'), 1200);
-            setInterval(() => createStar(container, 'speed-line'), 400);
+            // Sıklığı azalttım (daha az kasma için)
+            setInterval(() => createStar(container, 'shooting-star'), 2500); 
+            setInterval(() => createStar(container, 'speed-line'), 800);
         }
 
         function initStaticStars() {
             const container = document.getElementById('static-stars-container');
-            const starCount = 150;
+            // Yıldız sayısını 150'den 60'a düşürdüm (Performans için yeterli)
+            const starCount = 60; 
             
             for (let i = 0; i < starCount; i++) {
                 const star = document.createElement('div');
@@ -193,31 +223,37 @@
                 const y = Math.random() * 100;
                 star.style.left = `${x}%`;
                 star.style.top = `${y}%`;
-                const size = Math.random() * 2.5 + 1; 
+                // Boyutları küçülttüm
+                const size = Math.random() * 2 + 1; 
                 star.style.width = `${size}px`;
                 star.style.height = `${size}px`;
-                star.style.animationDelay = `${Math.random() * 3}s`;
+                // Animasyon süresini uzattım (Browser'ı yormaz)
+                star.style.animationDuration = `${Math.random() * 3 + 2}s`; 
                 container.appendChild(star);
             }
         }
 
         function createStar(container, type) {
+            // DOM kirliliğini önlemek için sınır koyma
+            if (container.children.length > 20) return; 
+
             const el = document.createElement('div');
             el.classList.add(type);
             
             if (type === 'shooting-star') {
                 el.style.top = Math.random() * 50 + '%';
                 el.style.left = Math.random() * 100 + '%';
-                el.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                el.style.animationDuration = '2s';
             } else {
                 el.style.top = Math.random() * 100 + 'vh';
-                el.style.height = (Math.random() * 2 + 1) + 'px';
-                el.style.animationDuration = (Math.random() * 0.5 + 0.2) + 's';
+                el.style.height = '1px';
+                el.style.animationDuration = '0.5s';
                 el.style.left = Math.random() > 0.5 ? '-10%' : 'auto';
                 if(el.style.left === 'auto') el.style.right = '-10%';
             }
             container.appendChild(el);
-            setTimeout(() => el.remove(), 2000);
+            // Temizleme süresini elementin animasyon süresine göre ayarla
+            setTimeout(() => el.remove(), 2100);
         }
     </script>
     <style>
@@ -266,35 +302,27 @@
             position: absolute;
             background: white;
             border-radius: 50%;
-            opacity: 0.8;
-            box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
-            animation: twinkle 3s infinite ease-in-out;
+            opacity: 0.6;
+            animation: twinkle infinite ease-in-out;
         }
 
         @keyframes twinkle {
-            0%, 100% { opacity: 0.4; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 8px white; }
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.9; }
         }
 
-        /* GÜNCEL: Mavi Menü Kartı 
-           Daha koyu mavi + Daha fazla şeffaflık (Opacity düşürüldü)
-        */
+        /* Menü Kartı - Optimize Edilmiş Blur */
         .glass-panel {
-            /* Eski: rgba(2, 122, 255, 0.9) 
-               Yeni: rgba(0, 60, 180, 0.65) -> Daha koyu mavi, daha transparan
-            */
             background: linear-gradient(135deg, rgba(0, 60, 180, 0.65), rgba(0, 30, 120, 0.65));
-            backdrop-filter: blur(15px); /* Transparanlık arttığı için blur azıcık kısıldı */
-            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(12px); /* Blur azaltıldı (Performans artışı) */
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-top: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: 30px;
             padding: 3rem;
             width: 90%;
             max-width: 420px;
-            box-shadow: 
-                0 0 60px rgba(0, 80, 200, 0.3),
-                0 20px 50px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); /* Gölge optimize edildi */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -302,9 +330,7 @@
             z-index: 50; 
         }
 
-        /* GÜNCEL: Animasyonlu Logo - YERİNDE DURUYOR 
-           Float efekti kalktı, yerine güçlü bir neon parıltısı geldi.
-        */
+        /* Başlık Animasyonu */
         .animated-title {
             font-family: 'Inter', sans-serif;
             font-weight: 900;
@@ -314,47 +340,34 @@
             margin-bottom: 2rem;
             text-align: center;
             /* Sabit pozisyon, sadece gölge/ışık oynuyor */
-            animation: intensePulse 2.5s infinite ease-in-out;
+            animation: intensePulse 3s infinite ease-in-out;
         }
 
         @keyframes intensePulse {
             0%, 100% {
-                text-shadow: 
-                    0 0 10px rgba(255, 255, 255, 0.7),
-                    0 0 20px rgba(2, 122, 255, 0.5),
-                    0 0 30px rgba(2, 122, 255, 0.3);
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
             }
             50% {
-                text-shadow: 
-                    0 0 15px rgba(255, 255, 255, 1),
-                    0 0 30px rgba(2, 122, 255, 0.8),
-                    0 0 50px rgba(2, 122, 255, 0.6),
-                    0 0 70px rgba(2, 122, 255, 0.4);
-                transform: scale(1.02); /* Çok hafif bir büyüme nefes alma gibi */
+                text-shadow: 0 0 25px rgba(2, 122, 255, 0.8), 0 0 50px rgba(2, 122, 255, 0.4);
             }
         }
 
         .custom-input {
             width: 100%;
-            background: rgba(0, 0, 0, 0.3); /* Biraz daha koyu zemin */
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.15);
             color: white;
             padding: 14px 20px;
             border-radius: 16px;
             margin-bottom: 16px;
             outline: none;
-            transition: all 0.3s ease;
+            transition: border-color 0.3s ease;
             font-size: 0.95rem;
         }
 
         .custom-input:focus {
             background: rgba(0, 0, 0, 0.4);
-            border-color: white;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-        }
-
-        .custom-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
+            border-color: #4da3ff;
         }
 
         .action-btn {
@@ -366,7 +379,7 @@
             border-radius: 16px;
             border: none;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.2s ease, background 0.2s ease;
             font-size: 1rem;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -377,7 +390,6 @@
         .action-btn:hover {
             background: #f0f8ff;
             transform: translateY(-2px);
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.6); /* Daha parlak hover */
         }
 
         .link-text {
@@ -391,54 +403,85 @@
             text-decoration: underline;
             text-decoration-thickness: 2px;
             text-underline-offset: 4px;
-            transition: opacity 0.3s;
-        }
-        .link-text a:hover {
-            opacity: 0.8;
-            text-shadow: 0 0 10px white;
         }
 
+        /* Hata Mesajı Kutusu */
+        .error-message {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            color: #ffcccc;
+            font-size: 0.9rem;
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Kayan Yıldız ve Hız Çizgileri - Optimize */
         .shooting-star {
             position: absolute;
-            width: 150px; height: 2px;
+            width: 100px; height: 1px;
             background: linear-gradient(90deg, transparent, white, transparent);
             transform: rotate(-45deg);
             opacity: 0;
             animation: shoot linear forwards;
-            filter: drop-shadow(0 0 5px white);
+            pointer-events: none;
         }
         @keyframes shoot {
             0% { transform: translate(0,0) rotate(-45deg); opacity: 1; }
-            100% { transform: translate(-600px, 600px) rotate(-45deg); opacity: 0; }
+            100% { transform: translate(-400px, 400px) rotate(-45deg); opacity: 0; }
         }
 
         .speed-line {
             position: absolute;
-            width: 40%;
+            width: 30%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
             animation: speedMove linear forwards;
+            pointer-events: none;
         }
         @keyframes speedMove {
             0% { transform: translateX(0); opacity: 0; }
-            50% { opacity: 1; }
+            50% { opacity: 0.5; }
             100% { transform: translateX(100vw); opacity: 0; }
         }
 
         .animate-pop-in {
-            animation: popIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: popIn 0.5s ease-out forwards;
         }
         @keyframes popIn {
-            from { opacity: 0; transform: scale(0.95) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
         }
 
+        .animate-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* Home Page Large Spinner */
+        .home-spinner {
+            width: 80px; height: 80px;
+            border: 6px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 2rem;
+            box-shadow: 0 0 20px rgba(2, 122, 255, 0.3);
+        }
+        
         .spinner {
-            width: 40px; height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
+            width: 30px; height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
             border-top-color: white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 20px auto;
+            margin: 10px auto;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -455,14 +498,16 @@
         <div class="glass-panel">
             <h1 class="animated-title">hizliyim.com</h1>
             
-            <div id="login-loading" class="hidden text-center">
+            <div id="login-error" class="error-message hidden"></div>
+
+            <div id="login-loading" class="hidden text-center mb-4">
                 <div class="spinner"></div>
-                <p class="text-white text-sm mt-3 animate-pulse">Sistemlere bağlanılıyor...</p>
+                <p class="text-white text-xs mt-2 animate-pulse">Kontrol ediliyor...</p>
             </div>
 
             <form id="form-login" class="w-full">
-                <input type="email" id="login-email" placeholder="E-posta Adresin" class="custom-input" required>
-                <input type="password" id="login-password" placeholder="Şifren" class="custom-input" required>
+                <input type="email" id="login-email" placeholder="E-posta" class="custom-input" required>
+                <input type="password" id="login-password" placeholder="Şifre" class="custom-input" required>
                 <button type="submit" class="action-btn">Giriş Yap</button>
             </form>
 
@@ -477,9 +522,11 @@
         <div class="glass-panel">
             <h1 class="animated-title text-3xl">Aramıza Katıl</h1>
             
-            <div id="register-loading" class="hidden text-center">
+            <div id="register-error" class="error-message hidden"></div>
+
+            <div id="register-loading" class="hidden text-center mb-4">
                 <div class="spinner"></div>
-                <p class="text-white text-sm mt-3 animate-pulse">Kayıt oluşturuluyor...</p>
+                <p class="text-white text-xs mt-2 animate-pulse">Kaydın oluşturuluyor...</p>
             </div>
 
             <form id="form-register" class="w-full">
@@ -491,7 +538,7 @@
             </form>
 
             <div id="register-links" class="link-text">
-                Zaten bizden misin? <a href="#/login">Giriş Yap</a>
+                Hesabın var mı? <a href="#/login">Giriş Yap</a>
             </div>
         </div>
     </div>
@@ -499,11 +546,14 @@
     <!-- Home Sayfası -->
     <div id="page-home" class="page-content hidden w-full flex justify-center">
         <div class="glass-panel">
-            <div class="text-6xl mb-4 animate-bounce">🚀</div>
-            <h1 class="text-2xl font-bold mb-4">Hoş Geldin!</h1>
+            <!-- Roket yerine Spinner -->
+            <div class="home-spinner"></div>
+            
+            <h1 class="text-2xl font-bold mb-4">Hoş Geldin Balım!</h1>
             <p class="text-white text-center leading-relaxed mb-6 opacity-90">
-                Hesabın yönetici onayı bekliyor.            </p>
-            <button onclick="location.reload()" class="action-btn">Sayfayı Yenile</button>
+                Hesabın yönetici onayı bekliyor.
+            </p>
+            <button onclick="location.reload()" class="action-btn">Yenile</button>
         </div>
     </div>
 
