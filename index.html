@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hizliyim.com - HizliSystems</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        const myFirebaseConfig = {
+            apiKey: "AIzaSyCP0Rd8CAfzYRPtakfdQWBqS5uBn045XpE",
+            authDomain: "hizliyimforum.firebaseapp.com",
+            databaseURL: "https://hizliyimforum-default-rtdb.firebaseio.com",
+            projectId: "hizliyimforum",
+            storageBucket: "hizliyimforum.firebasestorage.app",
+            messagingSenderId: "903963422468",
+            appId: "1:903963422468:web:936c368393585efd0cea51"
+        };
+
+        let db, auth, userId;
+
+        try {
+            const app = initializeApp(myFirebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            console.log("Firebase başarıyla başlatıldı.");
+        } catch (e) {
+            console.error("Firebase başlatma hatası:", e);
+        }
+
+        // --- ZAMAN KONTROLÜ VE TEMA AYARI ---
+        function checkTimeAndApplyTheme() {
+            const hour = new Date().getHours();
+            const body = document.body;
+            
+            // Sabah 06:00 (dahil) ile Akşam 20:00 (hariç) arası GÜNDÜZ (Mavi)
+            // Diğer saatler GECE (Yıldızlı)
+            const isDayTime = hour >= 6 && hour < 20;
+
+            if (isDayTime) {
+                body.classList.add('day-mode');
+                body.classList.remove('night-mode');
+                initSnowEffects(); // Gündüz efektlerini başlat
+                console.log("Mod: GÜNDÜZ (Mavi)");
+            } else {
+                body.classList.add('night-mode');
+                body.classList.remove('day-mode');
+                initNightEffects(); // Gece efektlerini başlat
+                console.log("Mod: GECE (Yıldızlı)");
+            }
+        }
+
+        // --- Auth & Logic ---
+        async function authenticateUser() {
+            if (!auth) {
+                window.router.initialize(); 
+                return;
+            }
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    window.userId = userId;
+                } else {
+                    signInAnonymously(auth).then((cred) => {
+                        userId = cred.user.uid;
+                        window.userId = userId;
+                    });
+                }
+                window.router.initialize();
+            });
+            window.db = db;
+        }
+
+        async function saveRegistrationData(username, email, password) {
+            if (!window.db) return { success: false, message: "Bağlantı yok." };
+            const userRef = doc(window.db, "users", email.toLowerCase());
+             try {
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) return { success: false, message: "Bu e-posta zaten kayıtlı." };
+
+                await setDoc(userRef, {
+                    username, email: email.toLowerCase(), password, 
+                    createdAt: new Date().toISOString(), status: 'pending'
+                });
+                return { success: true };
+            } catch (e) { return { success: false, message: "Bir hata oluştu." }; }
+        }
+
+        async function verifyLoginCredentials(email, password) {
+             if (!window.db) return false;
+            const userRef = doc(window.db, "users", email.toLowerCase());
+            try {
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists() && docSnap.data().password === password) return true;
+                return false;
+            } catch (e) { return false; }
+        }
+
+        // --- Router ---
+        const router = {
+            routes: { '#': 'login', '#/': 'login', '#/login': 'login', '#/register': 'register', '#/home': 'home' },
+            load: () => {
+                const hash = window.location.hash || '#/login';
+                const page = router.routes[hash] || 'login';
+                document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
+                const currentPage = document.getElementById(`page-${page}`);
+                if (currentPage) {
+                    currentPage.classList.remove('hidden');
+                    currentPage.classList.add('animate-pop-in');
+                }
+                hideError('login');
+                hideError('register');
+            },
+            initialize: () => {
+                window.addEventListener('hashchange', router.load);
+                router.load();
+            }
+        };
+        window.router = router;
+
+        // --- DOM Ready ---
+        document.addEventListener('DOMContentLoaded', () => {
+            authenticateUser(); 
+            checkTimeAndApplyTheme(); // Temayı uygula
+
+            // Login
+            const formLogin = document.getElementById('form-login');
+            if (formLogin) {
+                formLogin.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    hideError('login');
+                    toggleLoading('login', true);
+                    
+                    const email = document.getElementById('login-email').value.trim();
+                    const password = document.getElementById('login-password').value;
+                    const success = await verifyLoginCredentials(email, password);
+                    
+                    if (success) {
+                        setTimeout(() => {
+                            window.location.hash = '#/home';
+                            formLogin.reset();
+                            toggleLoading('login', false);
+                        }, 800);
+                    } else {
+                        toggleLoading('login', false);
+                        showError('login', "Giriş bilgileri hatalı, tekrar dene!");
+                    }
+                });
+            }
+
+            // Register
+            const formRegister = document.getElementById('form-register');
+            if (formRegister) {
+                formRegister.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    hideError('register');
+
+                    const pass = document.getElementById('register-password').value;
+                    const confirm = document.getElementById('register-confirm-password').value;
+                    if (pass !== confirm) { 
+                        showError('register', "Şifreler uyuşmuyor!"); 
+                        return; 
+                    }
+
+                    toggleLoading('register', true);
+                    const result = await saveRegistrationData(
+                        document.getElementById('register-username').value.trim(),
+                        document.getElementById('register-email').value.trim(),
+                        pass
+                    );
+
+                    if (result.success) {
+                        setTimeout(() => {
+                            window.location.hash = '#/login';
+                            formRegister.reset();
+                            toggleLoading('register', false);
+                        }, 1500);
+                    } else {
+                        toggleLoading('register', false);
+                        showError('register', result.message);
+                    }
+                });
+            }
+        });
+
+        // Yardımcı Fonksiyonlar
+        function toggleLoading(type, isLoading) {
+            const form = document.getElementById(`form-${type}`);
+            const loading = document.getElementById(`${type}-loading`);
+            const links = document.getElementById(`${type}-links`);
+            
+            if (isLoading) {
+                form.classList.add('opacity-50', 'pointer-events-none');
+                links.classList.add('hidden');
+                loading.classList.remove('hidden');
+            } else {
+                form.classList.remove('opacity-50', 'pointer-events-none');
+                links.classList.remove('hidden');
+                loading.classList.add('hidden');
+            }
+        }
+
+        function showError(type, message) {
+            const errorBox = document.getElementById(`${type}-error`);
+            errorBox.textContent = message;
+            errorBox.classList.remove('hidden');
+            errorBox.classList.add('animate-shake');
+            setTimeout(() => errorBox.classList.remove('animate-shake'), 500);
+        }
+
+        function hideError(type) {
+            const errorBox = document.getElementById(`${type}-error`);
+            if(errorBox) errorBox.classList.add('hidden');
+        }
+
+        // --- GÜNDÜZ EFEKTLERİ (KAR TANELERİ) ---
+        function initSnowEffects() {
+            const container = document.getElementById('day-effects-container');
+            container.style.display = 'block'; // Görünür yap
+            const particleCount = 50; 
+
+            for (let i = 0; i < particleCount; i++) {
+                const flake = document.createElement('div');
+                flake.classList.add('snowflake');
+                const size = Math.random() * 5 + 2 + 'px';
+                flake.style.width = size;
+                flake.style.height = size;
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                flake.style.animationDelay = Math.random() * 2 + 's';
+                flake.style.opacity = Math.random() * 0.7 + 0.3;
+                container.appendChild(flake);
+            }
+        }
+
+        // --- GECE EFEKTLERİ (YILDIZLAR) ---
+        function initNightEffects() {
+            const nightContainer = document.getElementById('night-effects-container');
+            const staticContainer = document.getElementById('static-stars-container');
+            
+            nightContainer.style.display = 'block';
+            staticContainer.style.display = 'block';
+
+            // Kayan Yıldızlar ve Hız Çizgileri
+            setInterval(() => createStar(nightContainer, 'shooting-star'), 2500); 
+            setInterval(() => createStar(nightContainer, 'speed-line'), 800);
+
+            // Sabit Yıldızlar
+            const starCount = 60;
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('static-star');
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                star.style.left = `${x}%`;
+                star.style.top = `${y}%`;
+                const size = Math.random() * 2 + 1; 
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDuration = `${Math.random() * 3 + 2}s`; 
+                staticContainer.appendChild(star);
+            }
+        }
+
+        function createStar(container, type) {
+            if (container.children.length > 20) return; 
+            const el = document.createElement('div');
+            el.classList.add(type);
+            
+            if (type === 'shooting-star') {
+                el.style.top = Math.random() * 50 + '%';
+                el.style.left = Math.random() * 100 + '%';
+                el.style.animationDuration = '2s';
+            } else {
+                el.style.top = Math.random() * 100 + 'vh';
+                el.style.height = '1px';
+                el.style.animationDuration = '0.5s';
+                el.style.left = Math.random() > 0.5 ? '-10%' : 'auto';
+                if(el.style.left === 'auto') el.style.right = '-10%';
+            }
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 2100);
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+        
+        :root {
+            --brand-blue: #027AFF;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: white;
+            position: relative;
+            transition: background 1s ease; /* Mod geçişi yumuşak olsun */
+        }
+
+        /* --- TEMA ARKAPLANLARI --- */
+        
+        /* Gündüz Modu Arkaplanı */
+        body.day-mode {
+            background: linear-gradient(125deg, #001f3f, #027aff, #001233);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        /* Gece Modu Arkaplanı */
+        body.night-mode {
+            background: black;
+        }
+        
+        /* Gece modu için sabit gradient katmanı */
+        body.night-mode .bg-gradient-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #000000 0%, #05051a 50%, #000814 100%);
+            z-index: -5;
+            display: block;
+        }
+        body.day-mode .bg-gradient-overlay { display: none; }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- EFEKT KONTEYNERLARI --- */
+        #day-effects-container, #night-effects-container, #static-stars-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: none; /* JS ile açılacak */
+        }
+        
+        #day-effects-container { z-index: 0; }
+        #static-stars-container { z-index: -4; }
+        #night-effects-container { z-index: -3; }
+
+        /* Gündüz: Kar Taneleri */
+        .snowflake {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            top: -10px;
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg); }
+            100% { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        /* Gece: Yıldızlar */
+        .static-star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: twinkle infinite ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.9; }
+        }
+
+        .shooting-star {
+            position: absolute;
+            width: 100px; height: 1px;
+            background: linear-gradient(90deg, transparent, white, transparent);
+            transform: rotate(-45deg);
+            opacity: 0;
+            animation: shoot linear forwards;
+        }
+        @keyframes shoot {
+            0% { transform: translate(0,0) rotate(-45deg); opacity: 1; }
+            100% { transform: translate(-400px, 400px) rotate(-45deg); opacity: 0; }
+        }
+
+        .speed-line {
+            position: absolute;
+            width: 30%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: speedMove linear forwards;
+        }
+        @keyframes speedMove {
+            0% { transform: translateX(0); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translateX(100vw); opacity: 0; }
+        }
+
+        /* --- MENÜ KARTI (ORTAK STİL) --- */
+        .glass-panel {
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 30px;
+            padding: 3rem;
+            width: 90%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 50;
+            transition: all 0.5s ease;
+        }
+
+        /* Gündüz Kart Stili */
+        body.day-mode .glass-panel {
+            background: rgba(20, 40, 70, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Gece Kart Stili */
+        body.night-mode .glass-panel {
+            background: linear-gradient(135deg, rgba(0, 60, 180, 0.65), rgba(0, 30, 120, 0.65));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Başlık Animasyonları */
+        .logo-text-day {
+            background: linear-gradient(to right, #ffffff 0%, #00f3ff 50%, #ffffff 100%);
+            background-size: 200% auto;
+            color: #fff;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shineMove 3s linear infinite;
+        }
+        @keyframes shineMove {
+            0% { background-position: 200% center; }
+            100% { background-position: -200% center; }
+        }
+
+        .logo-text-night {
+            animation: intensePulse 3s infinite ease-in-out;
+            color: #ffffff;
+        }
+        @keyframes intensePulse {
+            0%, 100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+            50% { text-shadow: 0 0 25px rgba(2, 122, 255, 0.8), 0 0 50px rgba(2, 122, 255, 0.4); }
+        }
+
+        /* Başlığı moda göre seçme */
+        body.day-mode .animated-title {
+            background: linear-gradient(to right, #ffffff 0%, #00f3ff 50%, #ffffff 100%);
+            background-size: 200% auto;
+            color: #fff;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shineMove 3s linear infinite;
+            font-size: 3rem; /* Gündüz biraz daha büyük logo */
+        }
+        body.night-mode .animated-title {
+            color: #fff;
+            animation: intensePulse 3s infinite ease-in-out;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            font-size: 2.5rem;
+        }
+
+        .animated-title {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        /* Inputlar */
+        .custom-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        /* Gündüz inputları biraz daha açık */
+        body.day-mode .custom-input {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .custom-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #4da3ff;
+            box-shadow: 0 0 15px rgba(2, 122, 255, 0.2);
+        }
+
+        /* Butonlar */
+        .action-btn {
+            width: 100%;
+            font-weight: 800;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-top: 10px;
+        }
+        /* Gündüz Butonu */
+        body.day-mode .action-btn {
+            background: linear-gradient(90deg, #ffffff, #d6eaff);
+            color: #027aff;
+        }
+        /* Gece Butonu */
+        body.night-mode .action-btn {
+            background: #ffffff;
+            color: #027AFF;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        /* Linkler */
+        .link-text {
+            color: rgba(255,255,255,0.8);
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .link-text a {
+            color: white;
+            font-weight: 700;
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 4px;
+        }
+
+        /* Hata Mesajı */
+        .error-message {
+            background: rgba(220, 38, 38, 0.25);
+            border: 1px solid rgba(220, 38, 38, 0.5);
+            color: #ffcccc;
+            font-size: 0.9rem;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .animate-pop-in {
+            animation: popIn 0.5s ease-out forwards;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .animate-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* Spinners */
+        .spinner {
+            width: 30px; height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        .home-spinner {
+            width: 80px; height: 80px;
+            border: 6px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 2rem;
+            box-shadow: 0 0 20px rgba(2, 122, 255, 0.3);
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body class="day-mode"> <!-- JS ile değişecek default day -->
+
+    <div class="bg-gradient-overlay"></div>
+    
+    <!-- Efekt Konteynerları -->
+    <div id="day-effects-container"></div>
+    <div id="static-stars-container"></div>
+    <div id="night-effects-container"></div>
+
+    <!-- Login Sayfası -->
+    <div id="page-login" class="page-content hidden w-full flex justify-center">
+        <div class="glass-panel">
+            <h1 class="animated-title">hizliyim.com</h1>
+            
+            <div id="login-error" class="error-message hidden"></div>
+
+            <div id="login-loading" class="hidden text-center mb-4">
+                <div class="spinner"></div>
+                <p class="text-white text-xs mt-2 animate-pulse">Veritabanı kontrol ediliyor...</p>
+            </div>
+
+            <form id="form-login" class="w-full">
+                <input type="email" id="login-email" placeholder="E-posta Adresi" class="custom-input" required>
+                <input type="password" id="login-password" placeholder="Şifre" class="custom-input" required>
+                <button type="submit" class="action-btn">Giriş Yap</button>
+            </form>
+
+            <div id="login-links" class="link-text">
+                Hesabın yok mu? <a href="#/register">Hemen Kayıt Ol</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Sayfası -->
+    <div id="page-register" class="page-content hidden w-full flex justify-center">
+        <div class="glass-panel">
+            <h1 class="animated-title" style="font-size: 2rem;">Hesap Oluştur</h1>
+            
+            <div id="register-error" class="error-message hidden"></div>
+
+            <div id="register-loading" class="hidden text-center mb-4">
+                <div class="spinner"></div>
+                <p class="text-white text-xs mt-2 animate-pulse">Kaydın oluşturuluyor...</p>
+            </div>
+
+            <form id="form-register" class="w-full">
+                <input type="text" id="register-username" placeholder="Kullanıcı Adı" class="custom-input" required>
+                <input type="email" id="register-email" placeholder="E-posta Adresi" class="custom-input" required>
+                <input type="password" id="register-password" placeholder="Şifre Belirle" class="custom-input" required>
+                <input type="password" id="register-confirm-password" placeholder="Şifre Tekrar" class="custom-input" required>
+                <button type="submit" class="action-btn">Kayıt Ol</button>
+            </form>
+
+            <div id="register-links" class="link-text">
+                Hesabın var mı? <a href="#/login">Giriş Yap</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Home Sayfası -->
+    <div id="page-home" class="page-content hidden w-full flex justify-center">
+        <div class="glass-panel">
+            <div class="home-spinner"></div>
+            
+            <h1 class="text-2xl font-bold mb-4">Eve Hoş Geldin!</h1>
+            <p class="text-white text-center leading-relaxed mb-6 opacity-90">
+                Hesabın yönetici onayı bekliyor.
+            </p>
+            <button onclick="location.reload()" class="action-btn">Yenile</button>
+        </div>
+    </div>
+
+</body>
+</html>
+
+
