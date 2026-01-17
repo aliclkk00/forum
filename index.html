@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>423 - Erişim Kilitli</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        // --- ZAMAN KONTROLÜ VE TEMA AYARI ---
+        function checkTimeAndApplyTheme() {
+            const hour = new Date().getHours();
+            const body = document.body;
+            
+            // 06:00 - 20:00 arası GÜNDÜZ
+            const isDayTime = hour >= 6 && hour < 20;
+
+            if (isDayTime) {
+                body.classList.add('day-mode');
+                body.classList.remove('night-mode');
+                initSnowEffects();
+            } else {
+                body.classList.add('night-mode');
+                body.classList.remove('day-mode');
+                initNightEffects();
+            }
+        }
+
+        // --- GÜNDÜZ EFEKTLERİ ---
+        function initSnowEffects() {
+            const container = document.getElementById('day-effects-container');
+            container.innerHTML = ''; // Temizle
+            container.style.display = 'block';
+            
+            for (let i = 0; i < 40; i++) {
+                const flake = document.createElement('div');
+                flake.classList.add('snowflake');
+                const size = Math.random() * 5 + 2 + 'px';
+                flake.style.width = size;
+                flake.style.height = size;
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                flake.style.animationDelay = Math.random() * 2 + 's';
+                flake.style.opacity = Math.random() * 0.6 + 0.2;
+                container.appendChild(flake);
+            }
+        }
+
+        // --- GECE EFEKTLERİ ---
+        function initNightEffects() {
+            const container = document.getElementById('night-effects-container');
+            container.innerHTML = ''; // Temizle
+            container.style.display = 'block';
+
+            // Sabit Yıldızlar
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.classList.add('static-star');
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                const size = Math.random() * 2 + 1 + 'px';
+                star.style.width = size;
+                star.style.height = size;
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                container.appendChild(star);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkTimeAndApplyTheme();
+        });
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; color: white;
+            transition: background 1s ease;
+        }
+
+        /* Temalar */
+        body.day-mode {
+            background: linear-gradient(125deg, #001f3f, #027aff, #001233);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        body.night-mode {
+            background: linear-gradient(180deg, #000000 0%, #05051a 100%);
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Efektler */
+        #day-effects-container, #night-effects-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: none; z-index: 0;
+        }
+
+        .snowflake {
+            position: absolute; background: white; border-radius: 50%; top: -10px;
+            animation: fall linear infinite;
+        }
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(360deg); }
+        }
+
+        .static-star {
+            position: absolute; background: white; border-radius: 50%; opacity: 0.6;
+            animation: twinkle infinite ease-in-out;
+        }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.9; } }
+
+        /* Cam Kart */
+        .glass-panel {
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 30px; padding: 3rem;
+            width: 90%; max-width: 400px;
+            text-align: center;
+            position: relative; z-index: 50;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* Gündüz/Gece Kart Farklılıkları */
+        body.day-mode .glass-panel { background: rgba(20, 40, 70, 0.45); }
+        body.night-mode .glass-panel { background: rgba(0, 30, 90, 0.55); border-top: 1px solid rgba(255,255,255,0.3); }
+
+        /* Kilit İkonu */
+        .lock-icon-wrapper {
+            width: 80px; height: 80px;
+            margin: 0 auto 1.5rem auto;
+            display: flex; justify-content: center; align-items: center;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: pulseIcon 3s infinite ease-in-out;
+        }
+        
+        .lock-svg {
+            width: 40px; height: 40px;
+            fill: none; stroke: white; stroke-width: 2;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));
+        }
+
+        @keyframes pulseIcon {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,255,255,0); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(2, 122, 255, 0.3); }
+        }
+
+        h1 { font-size: 4rem; font-weight: 900; line-height: 1; margin-bottom: 0.5rem; letter-spacing: -2px; }
+        h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; opacity: 0.9; }
+        p { font-size: 0.95rem; opacity: 0.7; line-height: 1.6; margin-bottom: 2rem; }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 30px;
+            background: white; color: #027AFF;
+            font-weight: 800; border-radius: 14px;
+            text-decoration: none; text-transform: uppercase;
+            letter-spacing: 1px; font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(255,255,255,0.3); }
+
+    </style>
+</head>
+<body class="day-mode">
+
+    <div id="day-effects-container"></div>
+    <div id="night-effects-container"></div>
+
+    <div class="glass-panel">
+        <div class="lock-icon-wrapper">
+            <!-- SVG Kilit İkonu -->
+            <svg class="lock-svg" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+        </div>
+
+        <h1>423</h1>
+        <h2>Erişim Kilitlendi</h2>
+        <p>
+            Şuanda sunucu çevrimdışı. Daha sonra tekrar deneyin.</p>
+
+        <a href="javascript:history.back()" class="btn">Geri Dön</a>
+    </div>
+
+</body>
+</html>
+
