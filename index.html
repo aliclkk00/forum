@@ -43,7 +43,7 @@
         function checkTimeAndApplyTheme() {
             const hour = new Date().getHours();
             const body = document.body;
-            const isDayTime = hour >= 6 && hour < 20;
+            const isDayTime = hour >= 999 && hour < 20;
 
             if (isDayTime) {
                 body.classList.add('day-mode');
