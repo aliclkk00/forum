@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>hizliyim.com - HizliSystems</title>
     
-    <!-- Balımmmm sekme logosu burada, sonlogo.png kullanılıyor -->
+    <!-- Site Icon -->
     <link rel="icon" type="image/png" href="sonlogo.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -34,12 +34,11 @@
             const app = initializeApp(myFirebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-            console.log("Firebase başarıyla başlatıldı balımmmm.");
         } catch (e) {
-            console.error("Firebase başlatma hatası:", e);
+            console.error("Initialization error:", e);
         }
 
-        // --- ZAMAN KONTROLÜ VE TEMA AYARI ---
+        // --- THEME MANAGEMENT ---
         function checkTimeAndApplyTheme() {
             const hour = new Date().getHours();
             const body = document.body;
@@ -56,7 +55,7 @@
             }
         }
 
-        // --- Auth & Logic ---
+        // --- AUTH & LOGIC ---
         async function authenticateUser() {
             if (!auth) {
                 window.router.initialize(); 
@@ -78,18 +77,18 @@
         }
 
         async function saveRegistrationData(username, email, password) {
-            if (!window.db) return { success: false, message: "Bağlantı yok." };
+            if (!window.db) return { success: false, message: "Baglanti yok." };
             const userRef = doc(window.db, "users", email.toLowerCase());
              try {
                 const docSnap = await getDoc(userRef);
-                if (docSnap.exists()) return { success: false, message: "Bu e-posta zaten kayıtlı." };
+                if (docSnap.exists()) return { success: false, message: "Bu e-mail zaten kayitli." };
 
                 await setDoc(userRef, {
                     username, email: email.toLowerCase(), password, 
                     createdAt: new Date().toISOString(), status: 'pending'
                 });
                 return { success: true };
-            } catch (e) { return { success: false, message: "Bir hata oluştu." }; }
+            } catch (e) { return { success: false, message: "Bir hata olustu." }; }
         }
 
         async function verifyLoginCredentials(email, password) {
@@ -102,7 +101,7 @@
             } catch (e) { return false; }
         }
 
-        // --- Router ---
+        // --- ROUTER ---
         const router = {
             routes: { '#': 'login', '#/': 'login', '#/login': 'login', '#/register': 'register', '#/home': 'home' },
             load: () => {
@@ -139,7 +138,7 @@
                     }, 800);
                 } else {
                     toggleLoading('login', false);
-                    showError('login', "Bilgiler hatalı Alicimmmm balımmmm!");
+                    showError('login', "Bilgiler hatali!");
                 }
             });
 
@@ -148,7 +147,7 @@
                 const pass = document.getElementById('register-password').value;
                 const confirm = document.getElementById('register-confirm-password').value;
                 if (pass !== confirm) { 
-                    showError('register', "Şifreler uyuşmuyor balımmmm!"); 
+                    showError('register', "Sifreler uyusmuyor!"); 
                     return; 
                 }
                 toggleLoading('register', true);
@@ -229,7 +228,7 @@
         }
     </script>
     <style>
-        /* Balımmmm senin özel fontun burada tanımlanıyor Alicimmmm */
+        /* Custom Font Definition */
         @font-face {
             font-family: 'HizliFont';
             src: url('font.woff2') format('woff2');
@@ -241,7 +240,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
         
         body {
-            /* Tüm siteye senin fontunu verdik balımmmm */
             font-family: 'HizliFont', 'Inter', sans-serif;
             margin: 0; padding: 0;
             width: 100vw; height: 100vh;
@@ -250,7 +248,7 @@
             transition: background 1s ease;
         }
 
-        /* LOGO STİLİ - Balımmmm senin istediğin neon ve beyazlatma kısmı Alicimmmm */
+        /* Logo Styling */
         .neon-logo {
             width: 80px;
             height: auto;
@@ -310,7 +308,7 @@
         body.night-mode .glass-panel { background: linear-gradient(135deg, rgba(0, 60, 180, 0.45), rgba(0, 20, 100, 0.45)); }
         body.day-mode .glass-panel { background: rgba(15, 35, 75, 0.4); }
 
-        /* Alicimmmm, senin istediğin gibi bu başlığın fontunu ellemedik, 'Inter' kaldı balımmmm */
+        /* Preserve original Inter font for logo text */
         .animated-title { 
             font-family: 'Inter', sans-serif !important;
             font-weight: 900; 
@@ -325,13 +323,28 @@
         .custom-input { width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 15px 22px; border-radius: 18px; margin-bottom: 15px; outline: none; transition: 0.3s; font-size: 0.95rem; }
         .custom-input:focus { border-color: #027aff; background: rgba(255, 255, 255, 0.1); box-shadow: 0 0 15px rgba(2, 122, 255, 0.2); }
         
-        .action-btn { width: 100%; font-weight: 800; padding: 16px; border-radius: 18px; border: none; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; background: white; color: #027aff; margin-top: 10px; }
+        .action-btn { width: 100%; font-weight: 800; padding: 16px; border-radius: 18px; border: none; cursor: pointer; transition: 0.3s; letter-spacing: 1px; background: white; color: #027aff; margin-top: 10px; }
         .action-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); filter: brightness(1.1); }
 
         .error-message { background: rgba(220, 38, 38, 0.3); border: 1px solid #dc2626; color: #ffcccc; padding: 12px; border-radius: 12px; margin-bottom: 20px; width: 100%; text-align: center; font-size: 0.9rem; }
         
         .animate-pop-in { animation: popIn 0.5s ease-out forwards; }
         @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* Smooth Mini Loader CSS */
+        .smooth-mini-loader {
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #ffffff;
+            border-radius: 50%;
+            animation: smoothRotate 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            margin-bottom: 1.5rem;
+        }
+        @keyframes smoothRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -340,53 +353,55 @@
     <div id="static-stars-container"></div>
     <div id="night-effects-container"></div>
 
-    <!-- Login Sayfası Alicimmmm -->
+    <!-- Login Page -->
     <div id="page-login" class="page-content hidden w-full flex justify-center">
         <div class="glass-panel">
             <img src="sonlogo.png" alt="Logo" class="neon-logo">
             <h1 class="animated-title">hizliyim.com</h1>
             
             <div id="login-error" class="error-message hidden"></div>
-            <div id="login-loading" class="hidden mb-4"><p class="animate-pulse text-xs">Veritabanı kontrol ediliyor.</p></div>
+            <div id="login-loading" class="hidden mb-4"><p class="animate-pulse text-xs">Veritabani kontrol ediliyor.</p></div>
 
             <form id="form-login" class="w-full">
-                <input type="email" id="login-email" placeholder="E-posta" class="custom-input" required>
-                <input type="password" id="login-password" placeholder="Sifre" class="custom-input" required>
+                <input type="email" id="login-email" placeholder="E-mail Adresi" class="custom-input" required>
+                <input type="password" id="login-password" placeholder="Password" class="custom-input" required>
                 <button type="submit" class="action-btn">Giris Yap</button>
             </form>
-            <div class="mt-6 text-sm opacity-80 text-center">Hesabın yok mu? <a href="#/register" class="font-bold underline">Kayıt Ol</a></div>
+            <div class="mt-6 text-sm opacity-80 text-center">Hesabin yok mu? <a href="#/register" class="font-bold underline">Kayit Ol</a></div>
         </div>
     </div>
 
-    <!-- Register Sayfası Alicimmmm -->
+    <!-- Register Page -->
     <div id="page-register" class="page-content hidden w-full flex justify-center">
         <div class="glass-panel">
             <img src="sonlogo.png" alt="Logo" class="neon-logo" style="width: 65px;">
             <h1 class="animated-title" style="font-size: 2rem;">Yeni Hesap</h1>
             
             <div id="register-error" class="error-message hidden"></div>
-            <div id="register-loading" class="hidden mb-4"><p class="animate-pulse text-xs">Hesap oluşturuluyor.</p></div>
+            <div id="register-loading" class="hidden mb-4"><p class="animate-pulse text-xs">Hesap olusturuluyor.</p></div>
 
             <form id="form-register" class="w-full">
-                <input type="text" id="register-username" placeholder="Kullanıcı Adı" class="custom-input" required>
-                <input type="email" id="register-email" placeholder="E-posta Adresi" class="custom-input" required>
-                <input type="password" id="register-password" placeholder="Şifre" class="custom-input" required>
-                <input type="password" id="register-confirm-password" placeholder="Şifre Tekrar" class="custom-input" required>
-                <button type="submit" class="action-btn">Kayıt Ol</button>
+                <input type="text" id="register-username" placeholder="Username" class="custom-input" required>
+                <input type="email" id="register-email" placeholder="E-mail Adresi" class="custom-input" required>
+                <input type="password" id="register-password" placeholder="Password" class="custom-input" required>
+                <input type="password" id="register-confirm-password" placeholder="Password Tekrar" class="custom-input" required>
+                <button type="submit" class="action-btn">Kayit Ol</button>
             </form>
-            <div class="mt-6 text-sm opacity-80 text-center">Zaten hesabın var mı? <a href="#/login" class="font-bold underline">Giriş Yap</a></div>
+            <div class="mt-6 text-sm opacity-80 text-center">Zaten hesabin var mi? <a href="#/login" class="font-bold underline">Giris Yap</a></div>
         </div>
     </div>
 
-    <!-- Home Sayfası Alicimmmm -->
+    <!-- Home Page -->
     <div id="page-home" class="page-content hidden w-full flex justify-center">
         <div class="glass-panel text-center">
-            <img src="sonlogo.png" alt="Logo" class="neon-logo" style="margin-bottom: 2rem;">
-            <h1 class="text-3xl font-bold mb-4">Hoş Geldin!</h1>
-            <p class="opacity-90 mb-8 text-lg">Hesabın yönetici onayı bekliyor.</p>
+            <img src="sonlogo.png" alt="Logo" class="neon-logo" style="margin-bottom: 0.5rem;">
+            <!-- Smooth Loader Added Under Logo -->
+            <div class="smooth-mini-loader"></div>
+            
+            <h1 class="text-3xl font-bold mb-4">Hosgeldin!</h1>
+            <p class="opacity-90 mb-8 text-lg">Hesabin yonetici onayi bekliyor.</p>
             <button onclick="location.reload()" class="action-btn">Yenile</button>
         </div>
     </div>
 </body>
 </html>
-
