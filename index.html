@@ -78,18 +78,18 @@
         }
 
         async function saveRegistrationData(username, email, password) {
-            if (!window.db) return { success: false, message: "Bağlantı yok balımmmm." };
+            if (!window.db) return { success: false, message: "Bağlantı yok." };
             const userRef = doc(window.db, "users", email.toLowerCase());
              try {
                 const docSnap = await getDoc(userRef);
-                if (docSnap.exists()) return { success: false, message: "Bu e-posta zaten kayıtlı balımmmm." };
+                if (docSnap.exists()) return { success: false, message: "Bu e-posta zaten kayıtlı." };
 
                 await setDoc(userRef, {
                     username, email: email.toLowerCase(), password, 
                     createdAt: new Date().toISOString(), status: 'pending'
                 });
                 return { success: true };
-            } catch (e) { return { success: false, message: "Bir hata oluştu Alicimmmm." }; }
+            } catch (e) { return { success: false, message: "Bir hata oluştu." }; }
         }
 
         async function verifyLoginCredentials(email, password) {
@@ -350,9 +350,9 @@
             <div id="login-loading" class="hidden mb-4"><p class="animate-pulse text-xs">Veritabanı kontrol ediliyor.</p></div>
 
             <form id="form-login" class="w-full">
-                <input type="email" id="login-email" placeholder="E-posta Adresi" class="custom-input" required>
-                <input type="password" id="login-password" placeholder="Şifre" class="custom-input" required>
-                <button type="submit" class="action-btn">Giriş Yap</button>
+                <input type="email" id="login-email" placeholder="E-posta" class="custom-input" required>
+                <input type="password" id="login-password" placeholder="Sifre" class="custom-input" required>
+                <button type="submit" class="action-btn">Giris Yap</button>
             </form>
             <div class="mt-6 text-sm opacity-80 text-center">Hesabın yok mu? <a href="#/register" class="font-bold underline">Kayıt Ol</a></div>
         </div>
