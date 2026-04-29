@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hizliyim.com - Professional Management</title>
+    
+    <!-- Site Icon -->
+    <link rel="icon" type="image/png" href="sonlogo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom Font Definition */
+        @font-face {
+            font-family: 'HizliFont';
+            src: url('font.woff2') format('woff2');
+            font-weight: normal; font-style: normal; font-display: swap;
+        }
+
+        body {
+            font-family: 'HizliFont', 'Inter', sans-serif;
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            overflow: hidden; color: white; position: relative;
+            transition: background 1s ease;
+        }
+
+        /* --- THEME COLORS --- */
+        body.day-mode {
+            background: linear-gradient(125deg, #001f3f, #027aff, #001233);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        body.night-mode {
+            background: radial-gradient(circle at top, #05051a 0%, #000000 100%);
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* LOGO STYLING */
+        .neon-logo {
+            width: 80px; height: auto;
+            filter: invert(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
+            animation: logoPulse 3s infinite ease-in-out;
+            pointer-events: none;
+            margin-bottom: 0.75rem;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); filter: invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); }
+            50% { transform: scale(1.05); filter: invert(1) drop-shadow(0 0 18px rgba(2, 122, 255, 0.9)); }
+        }
+
+        /* ANIMATED TITLE */
+        .animated-title { 
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 900; letter-spacing: -1px; text-align: center; 
+        }
+        body.day-mode .animated-title { 
+            background: linear-gradient(to right, #fff, #00f3ff, #fff); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+            animation: shine 3s linear infinite; 
+            font-size: 2.8rem;
+        }
+        body.night-mode .animated-title { 
+            color: #fff; text-shadow: 0 0 15px rgba(2, 122, 255, 0.8); 
+            font-size: 2.5rem;
+        }
+        @keyframes shine { 0% { background-position: 200%; } 100% { background-position: -200%; } }
+
+        /* GLASS PANELS */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 35px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s ease;
+            width: 90%;
+            max-width: 420px;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        body.night-mode .glass-card { background: linear-gradient(135deg, rgba(0, 60, 180, 0.3), rgba(0, 20, 100, 0.3)); }
+
+        /* INPUTS & BUTTONS */
+        .custom-input {
+            width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px; padding: 15px 22px; color: white; outline: none; transition: 0.3s;
+            margin-bottom: 15px; font-size: 0.95rem;
+        }
+        .custom-input:focus { border-color: #027aff; background: rgba(255, 255, 255, 0.1); }
+
+        .action-btn {
+            width: 100%;
+            background: white; color: #027aff; font-weight: 800;
+            padding: 16px; border-radius: 18px; transition: 0.3s;
+            display: inline-flex; align-items: center; justify-content: center;
+            letter-spacing: 1px; margin-top: 10px;
+        }
+        .action-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+
+        /* FACE ID TOAST */
+        #face-id-toast {
+            position: fixed; left: 50%; transform: translateX(-50%);
+            top: -100px; z-index: 2000;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px;
+            padding: 12px 28px; display: flex; align-items: center; gap: 12px;
+            transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 15px 45px rgba(0,0,0,0.6);
+        }
+        #face-id-toast.active { top: 25px; }
+        .pulse-dot { width: 8px; height: 8px; background: #00ff88; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); } 100% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); } }
+
+        /* NOTIFICATION GLOW */
+        .notify-glow { animation: neonGlow 2.5s infinite ease-in-out; }
+        @keyframes neonGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(2, 122, 255, 0.3); border-color: rgba(2, 122, 255, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(2, 122, 255, 0.8); border-color: rgba(2, 122, 255, 1); }
+        }
+
+        /* LOADER */
+        .smooth-loader {
+            width: 28px; height: 28px;
+            border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: white;
+            border-radius: 50%; animation: rotate 1s infinite linear;
+        }
+        @keyframes rotate { to { transform: rotate(360deg); } }
+
+        .hidden { display: none !important; }
+        .page-content { height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 2rem 0; }
+
+        /* SNOW & STARS */
+        #effects-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .snowflake { position: absolute; background: white; border-radius: 50%; top: -10px; animation: fall linear infinite; }
+        @keyframes fall { 0% { transform: translateY(-10vh); } 100% { transform: translateY(110vh); } }
+        .static-star { position: absolute; background: white; border-radius: 50%; animation: twinkle infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.9; } }
+    </style>
+</head>
+<body class="night-mode">
+
+    <div id="effects-container"></div>
+
+    <!-- Face ID Toast -->
+    <div id="face-id-toast">
+        <div class="pulse-dot"></div>
+        <span id="toast-message" style="font-size: 0.9rem; font-weight: bold;"></span>
+    </div>
+
+    <!-- Header Overlay -->
+    <header id="main-nav" class="fixed top-0 left-0 w-full px-10 py-6 flex justify-between items-center z-50 hidden">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.hash='#/home'">
+            <img src="sonlogo.png" class="w-8 invert" style="filter: invert(1) brightness(2);">
+            <span class="animated-title text-xl" style="font-size: 1.25rem !important;">hizliyim.com</span>
+        </div>
+        <div class="flex items-center gap-6">
+            <button id="notify-btn" class="w-11 h-11 glass-card p-0 flex items-center justify-center rounded-2xl relative" style="max-width: 44px; padding: 0;" onclick="toggleNotifPanel()">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22a2.98 2.98 0 0 0 2.818-2H9.182A2.98 2.98 0 0 0 12 22zm7-7.414V10c0-3.217-2.185-5.927-5.145-6.742C13.562 2.52 12.846 2 12 2s-1.562.52-1.855 1.258C7.185 4.073 5 6.783 5 10v4.586l-1.707 1.707A.996.996 0 0 0 3 17v1a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-1a.996.996 0 0 0-.293-.707L19 14.586z"/></svg>
+                <div id="notif-dot" class="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full hidden"></div>
+            </button>
+            <div class="relative">
+                <button class="w-11 h-11 glass-card p-0 flex items-center justify-center rounded-2xl overflow-hidden" style="max-width: 44px; padding: 0;" onclick="toggleProfileMenu()">
+                    <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=027aff&color=fff" class="w-full h-full object-cover">
+                </button>
+                <div id="profile-menu" class="absolute right-0 mt-3 w-56 glass-card p-2 hidden" style="width: 224px; padding: 0.5rem;">
+                    <button class="w-full text-left px-5 py-3 hover:bg-white/10 rounded-2xl transition text-sm" onclick="showPage('profile')">Hesap Detayi</button>
+                    <button class="w-full text-left px-5 py-3 hover:bg-red-500/20 text-red-400 rounded-2xl transition text-sm" onclick="logout()">Cikis Yap</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Login -->
+        <div id="page-login" class="page-content">
+            <div class="glass-card">
+                <img src="sonlogo.png" class="neon-logo">
+                <h1 class="animated-title">hizliyim.com</h1>
+                
+                <form id="login-form" class="w-full mt-8">
+                    <input type="text" id="login-id" placeholder="Username veya Email" class="custom-input" required>
+                    <input type="password" id="login-pass" placeholder="Password" class="custom-input" required>
+                    <button type="submit" class="action-btn">Giris Yap</button>
+                </form>
+                <p class="mt-8 text-sm opacity-60">Hesabiniz yok mu? <a href="#/register" class="font-bold underline">Kayit Ol</a></p>
+            </div>
+        </div>
+
+        <!-- Register -->
+        <div id="page-register" class="page-content hidden">
+            <div class="glass-card">
+                <img src="sonlogo.png" class="neon-logo" style="width: 65px;">
+                <h1 class="animated-title" style="font-size: 2rem !important;">Yeni Hesap</h1>
+                
+                <form id="register-form" class="w-full mt-8">
+                    <input type="text" id="reg-user" placeholder="Username" class="custom-input" required>
+                    <input type="email" id="reg-email" placeholder="Email Adresi" class="custom-input" required>
+                    <input type="password" id="reg-pass" placeholder="Password" class="custom-input" required>
+                    <button type="submit" class="action-btn">Kayit Ol</button>
+                </form>
+                <p class="mt-8 text-sm opacity-60">Zaten uye misiniz? <a href="#/login" class="font-bold underline">Giris Yap</a></p>
+            </div>
+        </div>
+
+        <!-- Home -->
+        <div id="page-home" class="page-content hidden">
+            <!-- Admin Dashboard -->
+            <div id="admin-dashboard" class="hidden w-full max-w-5xl px-6 flex flex-col items-center">
+                <div class="mb-10 text-center">
+                    <h2 class="text-4xl font-black mb-2 animated-title" style="font-size: 2.5rem !important;">Admin Paneli</h2>
+                    <p class="opacity-50">Sistem yonetimi ve kontrol merkezi</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+                    <div class="glass-card p-8 hover:scale-105 transition cursor-pointer" style="width: 100%; max-width: 100%;" onclick="showAdminSection('users')">
+                        <div class="w-14 h-14 bg-blue-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                            <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                        </div>
+                        <h3 class="font-bold">Kullanicilar</h3>
+                        <p class="text-[10px] opacity-40 mt-2">Yonet, Banla, Sil</p>
+                    </div>
+                    <div class="glass-card p-8 hover:scale-105 transition cursor-pointer" style="width: 100%; max-width: 100%;" onclick="showAdminSection('logs')">
+                        <div class="w-14 h-14 bg-purple-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                            <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9l-6-6zm0 2 4 4h-4V5zM7 19V5h5v5h5v9H7z"/></svg>
+                        </div>
+                        <h3 class="font-bold">Log Kayitlari</h3>
+                        <p class="text-[10px] opacity-40 mt-2">Gecmis islemler</p>
+                    </div>
+                    <div class="glass-card p-8 hover:scale-105 transition cursor-pointer" style="width: 100%; max-width: 100%;" onclick="showAdminSection('notify')">
+                        <div class="w-14 h-14 bg-amber-500 rounded-2xl mb-4 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                            <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+                        </div>
+                        <h3 class="font-bold">Bildirim Gonder</h3>
+                        <p class="text-[10px] opacity-40 mt-2">Duyuru merkezi</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Dashboard -->
+            <div id="user-dashboard" class="hidden text-center flex flex-col items-center">
+                <img src="sonlogo.png" class="neon-logo mx-auto mb-6">
+                <div class="smooth-loader mx-auto mb-6"></div>
+                <h1 class="text-3xl font-black mb-4">Yetkiniz Yok</h1>
+                <p class="opacity-50 max-w-sm mx-auto">Bu alani goruntulemek icin gerekli yetkiye sahip degilsiniz. Lutfen yonetici onayini bekleyin.</p>
+            </div>
+        </div>
+
+        <!-- Profile -->
+        <div id="page-profile" class="page-content hidden">
+            <div class="glass-card">
+                <h2 class="text-2xl font-bold mb-8 text-center animated-title" style="font-size: 1.75rem !important;">Hesap Bilgileri</h2>
+                <div class="space-y-4 w-full">
+                    <div class="flex justify-between items-center py-4 border-b border-white/5">
+                        <span class="opacity-40 text-sm">Kullanici Adi</span>
+                        <span id="prof-username" class="font-bold">---</span>
+                    </div>
+                    <div class="flex justify-between items-center py-4 border-b border-white/5">
+                        <span class="opacity-40 text-sm">Email Adresi</span>
+                        <span id="prof-email" class="font-bold">---</span>
+                    </div>
+                    <div class="flex justify-between items-center py-4 border-b border-white/5">
+                        <span class="opacity-40 text-sm">Kayit Tarihi</span>
+                        <span id="prof-date" class="font-bold">---</span>
+                    </div>
+                    <div class="flex justify-between items-center py-4">
+                        <span class="opacity-40 text-sm">Yetki Duzeyi</span>
+                        <span id="prof-role" class="px-4 py-1 bg-blue-500/20 text-blue-400 rounded-xl text-xs font-bold uppercase">---</span>
+                    </div>
+                </div>
+                <button class="action-btn w-full mt-10" onclick="window.location.hash='#/home'">Ana Sayfaya Don</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[1000] hidden flex items-center justify-center p-6">
+        <div class="glass-card w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+            <div class="p-8 border-b border-white/10 flex justify-between items-center">
+                <h2 id="modal-title" class="text-2xl font-bold">Yonetim</h2>
+                <button onclick="closeModal()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10">✕</button>
+            </div>
+            <div id="modal-content" class="p-8 overflow-y-auto flex-1"></div>
+        </div>
+    </div>
+
+    <!-- Notification Panel -->
+    <div id="notif-panel" class="fixed top-24 right-10 w-80 glass-card p-6 z-[1000] hidden" style="width: 320px; padding: 1.5rem;">
+        <h3 class="font-bold mb-5 flex justify-between items-center">Bildirimler <button onclick="markAllRead()" class="text-[10px] opacity-40 hover:opacity-100 transition">Tumunu Oku</button></h3>
+        <div id="notif-list" class="space-y-3 max-h-80 overflow-y-auto">
+            <p class="text-xs opacity-30 text-center py-10">Henuz bildirim yok.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, onSnapshot, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let currentUserData = null;
+        
+        // Firestore Paths (Following Rule 1)
+        const getPublicDataRef = (coll) => collection(db, 'artifacts', appId, 'public', 'data', coll);
+        const getPublicDocRef = (coll, id) => doc(db, 'artifacts', appId, 'public', 'data', coll, id);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDoc = await getDoc(getPublicDocRef('users', user.uid));
+                if (userDoc.exists()) {
+                    currentUserData = { uid: user.uid, ...userDoc.data() };
+                    if (currentUserData.status === 'banned') {
+                        showToast("Hesabiniz banlanmistir.");
+                        setTimeout(() => logout(), 2000);
+                        return;
+                    }
+                    startSession();
+                } else { window.location.hash = '#/login'; }
+            } else {
+                currentUserData = null;
+                if (window.location.hash !== '#/register') window.location.hash = '#/login';
+            }
+            route();
+        });
+
+        async function startSession() {
+            if (!currentUserData) return;
+            
+            await updateDoc(getPublicDocRef('users', currentUserData.uid), {
+                lastLogin: new Date().toISOString()
+            });
+
+            const welcomeMsg = currentUserData.username === 'alicelik' ? "Hosgeldiniz, admin" : "Hosgeldiniz, " + currentUserData.username;
+            showToast(welcomeMsg);
+
+            onSnapshot(getPublicDataRef('notifications'), (snap) => {
+                const list = [];
+                snap.forEach(d => {
+                    const data = d.data();
+                    if (data.target === 'all' || data.target === currentUserData.uid) list.push({ id: d.id, ...data });
+                });
+                renderNotifications(list);
+            }, (err) => console.error(err));
+
+            document.getElementById('main-nav').classList.remove('hidden');
+            document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${currentUserData.username}&background=027aff&color=fff`;
+            updateProfileUI();
+        }
+
+        function route() {
+            const hash = window.location.hash || '#/login';
+            const pages = ['login', 'register', 'home', 'profile'];
+            pages.forEach(p => {
+                const el = document.getElementById('page-' + p);
+                if (el) el.classList.add('hidden');
+            });
+
+            const activePage = hash.split('/')[1] || 'login';
+            const target = document.getElementById('page-' + activePage);
+            if (target) target.classList.remove('hidden');
+
+            if (activePage === 'home' && currentUserData) {
+                const isAdmin = currentUserData.role === 'admin';
+                document.getElementById('admin-dashboard').classList.toggle('hidden', !isAdmin);
+                document.getElementById('user-dashboard').classList.toggle('hidden', isAdmin);
+            }
+            checkTheme();
+        }
+
+        window.addEventListener('hashchange', route);
+
+        // --- AUTH ACTIONS ---
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('login-id').value;
+            const pass = document.getElementById('login-pass').value;
+            const snap = await getDocs(getPublicDataRef('users'));
+            let found = null;
+            snap.forEach(d => {
+                const data = d.data();
+                if ((data.username === id || data.email === id) && data.password === pass) found = { uid: d.id, ...data };
+            });
+
+            if (found) {
+                await signInAnonymously(auth);
+                window.location.hash = '#/home';
+                location.reload();
+            } else { showToast("Giris bilgileri hatali!"); }
+        };
+
+        document.getElementById('register-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const user = document.getElementById('reg-user').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+
+            const snap = await getDocs(getPublicDataRef('users'));
+            let exists = false;
+            snap.forEach(d => { if (d.data().username === user || d.data().email === email) exists = true; });
+
+            if (exists) { return showToast("Bu bilgiler zaten kayitli!"); }
+
+            const cred = await signInAnonymously(auth);
+            const role = user === 'alicelik' ? 'admin' : 'standard';
+            await setDoc(getPublicDocRef('users', cred.user.uid), {
+                username: user, email: email, password: pass, role: role, status: 'active',
+                createdAt: new Date().toISOString(), lastLogin: new Date().toISOString(), readNotifs: []
+            });
+            window.location.hash = '#/home';
+        };
+
+        window.logout = async () => { await signOut(auth); window.location.hash = '#/login'; location.reload(); };
+
+        // --- ADMIN HELPERS ---
+        window.showAdminSection = async (section) => {
+            const modal = document.getElementById('admin-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+
+            if (section === 'users') {
+                title.innerText = "Kullanici Yonetimi";
+                const snap = await getDocs(getPublicDataRef('users'));
+                let html = '<div class="space-y-4">';
+                snap.forEach(d => {
+                    const u = d.data();
+                    html += `
+                        <div class="glass-card p-6 flex justify-between items-center" style="max-width: 100%; width: 100%;">
+                            <div>
+                                <p class="font-bold">${u.username} <span class="text-[10px] opacity-40 ml-2 uppercase px-2 py-0.5 bg-white/5 rounded">${u.role}</span></p>
+                                <p class="text-xs opacity-40">${u.email}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="adminAction('ban', '${d.id}')" class="text-[10px] font-bold px-4 py-2 bg-yellow-500/10 text-yellow-500 rounded-xl hover:bg-yellow-500/20">Ban</button>
+                                <button onclick="adminAction('delete', '${d.id}')" class="text-[10px] font-bold px-4 py-2 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500/20">Sil</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                content.innerHTML = html + '</div>';
+            } else if (section === 'logs') {
+                title.innerText = "Sistem Hareketleri";
+                const snap = await getDocs(getPublicDataRef('logs'));
+                let html = '<div class="space-y-3">';
+                snap.forEach(d => {
+                    const l = d.data();
+                    html += `<div class="p-4 border-b border-white/5 flex justify-between text-sm"><span class="font-bold">${l.action}</span><span class="opacity-40 text-xs">${new Date(l.date).toLocaleString()}</span></div>`;
+                });
+                content.innerHTML = html + '</div>';
+            } else if (section === 'notify') {
+                title.innerText = "Yeni Duyuru";
+                content.innerHTML = `
+                    <div class="max-w-md mx-auto space-y-4 w-full">
+                        <input id="notif-title" placeholder="Duyuru Basligi" class="custom-input">
+                        <textarea id="notif-msg" placeholder="Mesaj detayi..." class="custom-input h-32"></textarea>
+                        <button id="send-notif-btn" class="action-btn w-full">Bildirim Gonder</button>
+                    </div>
+                `;
+                document.getElementById('send-notif-btn').onclick = async () => {
+                    const t = document.getElementById('notif-title').value;
+                    const m = document.getElementById('notif-msg').value;
+                    if (!t || !m) return showToast("Alanlari doldurun!");
+                    await addDoc(getPublicDataRef('notifications'), { title: t, message: m, target: 'all', date: new Date().toISOString() });
+                    await addDoc(getPublicDataRef('logs'), { action: "Duyuru Gonderildi: " + t, by: currentUserData.username, date: new Date().toISOString() });
+                    showToast("Bildirim gonderildi!");
+                    closeModal();
+                };
+            }
+        };
+
+        window.adminAction = async (type, uid) => {
+            const ref = getPublicDocRef('users', uid);
+            if (type === 'delete') {
+                if (confirm("Bu hesabi silmek istediginize emin misiniz?")) {
+                    await deleteDoc(ref);
+                    await addDoc(getPublicDataRef('logs'), { action: "Hesap Silindi: " + uid, by: currentUserData.username, date: new Date().toISOString() });
+                    showAdminSection('users');
+                }
+            } else if (type === 'ban') {
+                await updateDoc(ref, { status: 'banned' });
+                await addDoc(getPublicDataRef('logs'), { action: "Kullanici Banlandi: " + uid, by: currentUserData.username, date: new Date().toISOString() });
+                showAdminSection('users');
+            }
+        };
+
+        // --- UI HELPERS ---
+        window.closeModal = () => document.getElementById('admin-modal').classList.add('hidden');
+        window.toggleProfileMenu = () => document.getElementById('profile-menu').classList.toggle('hidden');
+        window.toggleNotifPanel = () => document.getElementById('notif-panel').classList.toggle('hidden');
+        window.showPage = (p) => { 
+            window.location.hash = '#/' + p; 
+            const menu = document.getElementById('profile-menu');
+            if (menu) menu.classList.add('hidden'); 
+        };
+
+        window.showToast = (msg) => {
+            const toast = document.getElementById('face-id-toast');
+            const msgEl = document.getElementById('toast-message');
+            if (!toast || !msgEl) return;
+            msgEl.innerText = msg;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 4000);
+        };
+
+        function renderNotifications(list) {
+            const container = document.getElementById('notif-list');
+            const dot = document.getElementById('notif-dot');
+            const btn = document.getElementById('notify-btn');
+            if (!container || !currentUserData) return;
+            
+            const unread = list.filter(n => !currentUserData.readNotifs?.includes(n.id));
+            if (dot) dot.classList.toggle('hidden', unread.length === 0);
+            if (btn) btn.classList.toggle('notify-glow', unread.length > 0);
+            
+            if (list.length === 0) { container.innerHTML = '<p class="text-xs opacity-30 text-center py-10">Bildirim yok.</p>'; return; }
+            container.innerHTML = list.map(n => `
+                <div class="p-5 rounded-3xl bg-white/5 border border-white/5 ${currentUserData.readNotifs?.includes(n.id) ? 'opacity-40' : 'border-blue-500/30'}" onclick="readNotif('${n.id}')">
+                    <p class="text-[10px] font-bold text-blue-400 mb-1">DUYURU</p>
+                    <p class="text-xs font-bold">${n.title}</p>
+                    <p class="text-[10px] opacity-50 mt-2">${n.message}</p>
+                </div>
+            `).join('');
+        }
+
+        window.readNotif = async (id) => {
+            if (!currentUserData.readNotifs.includes(id)) {
+                currentUserData.readNotifs.push(id);
+                await updateDoc(getPublicDocRef('users', currentUserData.uid), { readNotifs: currentUserData.readNotifs });
+            }
+        };
+
+        window.markAllRead = async () => {
+            const list = document.querySelectorAll('#notif-list > div');
+            if (!currentUserData) return;
+            const snap = await getDocs(getPublicDataRef('notifications'));
+            const allIds = [];
+            snap.forEach(d => allIds.push(d.id));
+            await updateDoc(getPublicDocRef('users', currentUserData.uid), { readNotifs: allIds });
+            currentUserData.readNotifs = allIds;
+        };
+
+        function updateProfileUI() {
+            if (!currentUserData) return;
+            const userEl = document.getElementById('prof-username');
+            const emailEl = document.getElementById('prof-email');
+            const roleEl = document.getElementById('prof-role');
+            const dateEl = document.getElementById('prof-date');
+            
+            if (userEl) userEl.innerText = currentUserData.username;
+            if (emailEl) emailEl.innerText = currentUserData.email;
+            if (roleEl) roleEl.innerText = currentUserData.role;
+            if (dateEl) dateEl.innerText = new Date(currentUserData.createdAt).toLocaleDateString();
+        }
+
+        function checkTheme() {
+            const hour = new Date().getHours();
+            const body = document.body;
+            const container = document.getElementById('effects-container');
+            if (!container) return;
+            container.innerHTML = '';
+            if (hour >= 6 && hour < 20) {
+                body.classList.add('day-mode'); body.classList.remove('night-mode');
+                for (let i = 0; i < 40; i++) {
+                    const f = document.createElement('div'); f.className = 'snowflake';
+                    f.style.width = f.style.height = Math.random() * 4 + 2 + 'px';
+                    f.style.left = Math.random() * 100 + 'vw';
+                    f.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                    f.style.animationDelay = Math.random() * 2 + 's';
+                    container.appendChild(f);
+                }
+            } else {
+                body.classList.add('night-mode'); body.classList.remove('day-mode');
+                for (let i = 0; i < 60; i++) {
+                    const s = document.createElement('div'); s.className = 'static-star';
+                    s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 100 + '%';
+                    s.style.width = s.style.height = Math.random() * 2 + 1 + 'px';
+                    s.style.animationDuration = Math.random() * 3 + 2 + 's';
+                    container.appendChild(s);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
