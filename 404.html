@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ooops! Çok Hızlısın | hizliyim.com</title>
+    
+    <!-- Site Icon -->
+    <link rel="icon" type="image/png" href="sonlogo.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <script type="module">
+        // --- THEME MANAGEMENT (Main siteyle senkronize çalışır) ---
+        function checkTimeAndApplyTheme() {
+            const hour = new Date().getHours();
+            const body = document.body;
+            // Sitenizdeki orijinal mantık korundu (gece moduna geçiş)
+            const isDayTime = hour >= 99 && hour < 20;
+
+            if (isDayTime) {
+                body.classList.add('day-mode');
+                body.classList.remove('night-mode');
+                initSnowEffects();
+            } else {
+                body.classList.add('night-mode');
+                body.classList.remove('day-mode');
+                initNightEffects();
+            }
+        }
+
+        function initSnowEffects() {
+            const container = document.getElementById('day-effects-container');
+            if(!container) return;
+            container.style.display = 'block';
+            for (let i = 0; i < 50; i++) {
+                const flake = document.createElement('div');
+                flake.classList.add('snowflake');
+                flake.style.width = flake.style.height = Math.random() * 5 + 2 + 'px';
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                flake.style.animationDelay = Math.random() * 2 + 's';
+                container.appendChild(flake);
+            }
+        }
+
+        function initNightEffects() {
+            const nightContainer = document.getElementById('night-effects-container');
+            const staticContainer = document.getElementById('static-stars-container');
+            if(!nightContainer || !staticContainer) return;
+            nightContainer.style.display = 'block';
+            staticContainer.style.display = 'block';
+            setInterval(() => createStar(nightContainer, 'shooting-star'), 2500); 
+            for (let i = 0; i < 60; i++) {
+                const star = document.createElement('div');
+                star.classList.add('static-star');
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = star.style.height = Math.random() * 2 + 1 + 'px';
+                star.style.animationDuration = Math.random() * 3 + 2 + 's'; 
+                staticContainer.appendChild(star);
+            }
+        }
+
+        function createStar(container, type) {
+            const el = document.createElement('div');
+            el.classList.add(type);
+            el.style.top = Math.random() * 50 + '%';
+            el.style.left = Math.random() * 100 + '%';
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 2100);
+        }
+
+        // --- COUNTDOWN & REDIRECT ---
+        let secondsLeft = 5;
+        const countdownEl = document.getElementById('countdown-text');
+        const progressRing = document.getElementById('progress-ring-circle');
+        
+        if (progressRing) {
+            const circumference = 2 * Math.PI * 18;
+            progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+            progressRing.style.strokeDashoffset = '0';
+
+            const countdownInterval = setInterval(() => {
+                secondsLeft--;
+                if (countdownEl) {
+                    countdownEl.textContent = secondsLeft;
+                }
+
+                // Halka animasyonunu güncelle
+                const offset = circumference - (secondsLeft / 5) * circumference;
+                progressRing.style.strokeDashoffset = offset;
+
+                if (secondsLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    window.location.href = 'https://hizliyim.com';
+                }
+            }, 1000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkTimeAndApplyTheme();
+        });
+    </script>
+    <style>
+        /* Custom Font Definition */
+        @font-face {
+            font-family: 'HizliFont';
+            src: url('font.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        body {
+            font-family: 'HizliFont', 'Inter', sans-serif;
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; color: white; position: relative;
+            transition: background 1s ease;
+        }
+
+        /* Logo Styling */
+        .neon-logo {
+            width: 80px;
+            height: auto;
+            margin-bottom: 0.75rem;
+            filter: invert(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
+            animation: logoPulse 3s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); filter: invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); }
+            50% { transform: scale(1.05); filter: invert(1) drop-shadow(0 0 18px rgba(2, 122, 255, 0.9)); }
+        }
+
+        body.day-mode {
+            background: linear-gradient(125deg, #001f3f, #027aff, #001233);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        body.night-mode { background: black; }
+        body.night-mode .bg-gradient-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #000000 0%, #05051a 50%, #000814 100%);
+            z-index: -5; display: block;
+        }
+        body.day-mode .bg-gradient-overlay { display: none; }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #day-effects-container, #night-effects-container, #static-stars-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: none;
+        }
+
+        .snowflake { position: absolute; background: white; border-radius: 50%; top: -10px; animation: fall linear infinite; }
+        @keyframes fall { 0% { transform: translateY(-10vh); } 100% { transform: translateY(110vh); } }
+
+        .static-star { position: absolute; background: white; border-radius: 50%; animation: twinkle infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.9; } }
+
+        .shooting-star { position: absolute; width: 100px; height: 1px; background: linear-gradient(90deg, transparent, white, transparent); transform: rotate(-45deg); animation: shoot 2s linear forwards; }
+        @keyframes shoot { 0% { transform: translate(0,0) rotate(-45deg); opacity: 1; } 100% { transform: translate(-400px, 400px) rotate(-45deg); opacity: 0; } }
+
+        .glass-panel {
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 35px; padding: 3rem; width: 90%; max-width: 440px;
+            display: flex; flex-direction: column; align-items: center;
+            position: relative; z-index: 50; transition: all 0.5s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+        }
+        body.night-mode .glass-panel { background: linear-gradient(135deg, rgba(0, 60, 180, 0.45), rgba(0, 20, 100, 0.45)); }
+        body.day-mode .glass-panel { background: rgba(15, 35, 75, 0.4); }
+
+        /* Glowing Text Effects */
+        .animated-title { 
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 900; 
+            letter-spacing: -1px; 
+            margin-bottom: 0.5rem; 
+            text-align: center; 
+        }
+        body.day-mode .animated-title { background: linear-gradient(to right, #fff, #00f3ff, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 3s linear infinite; font-size: 2.8rem; }
+        body.night-mode .animated-title { color: #fff; text-shadow: 0 0 15px rgba(2, 122, 255, 0.8); font-size: 2.5rem; }
+        @keyframes shine { 0% { background-position: 200%; } 100% { background-position: -200%; } }
+
+        .action-btn { width: 100%; font-weight: 800; padding: 16px; border-radius: 18px; border: none; cursor: pointer; transition: 0.3s; letter-spacing: 1px; background: white; color: #027aff; margin-top: 15px; }
+        .action-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); filter: brightness(1.1); }
+
+        .animate-pop-in { animation: popIn 0.5s ease-out forwards; }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* Radial Countdown Animation */
+        .countdown-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            margin: 1.5rem 0;
+        }
+        .countdown-number {
+            position: absolute;
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 1s linear;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient-overlay"></div>
+    <div id="day-effects-container"></div>
+    <div id="static-stars-container"></div>
+    <div id="night-effects-container"></div>
+
+    <!-- 404 Panel -->
+    <div class="w-full flex justify-center px-4">
+        <div class="glass-panel animate-pop-in text-center">
+            <img src="sonlogo.png" alt="Logo" class="neon-logo">
+            <h1 class="animated-title">Ooops!</h1>
+            
+            <p class="text-xl font-bold mt-2 text-blue-300">Sanırım çok hızlı gidiyordun...</p>
+            <p class="opacity-80 mt-2 text-sm max-w-sm">
+                Aradığın sayfa bulunamadı veya taşınmış olabilir. Ama endişelenme, seni hemen yörüngeye geri oturtuyoruz!
+            </p>
+
+            <!-- Radial Countdown Indicator -->
+            <div class="countdown-container">
+                <svg class="progress-ring" width="46" height="46">
+                    <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.1)" stroke-width="3" fill="transparent" r="18" cx="23" cy="23" />
+                    <circle id="progress-ring-circle" class="progress-ring-circle" stroke="#027aff" stroke-width="3" fill="transparent" r="18" cx="23" cy="23" />
+                </svg>
+                <span id="countdown-text" class="countdown-number">5</span>
+            </div>
+
+            <p class="text-xs opacity-60">Saniye sonra otomatik yönlendiriliyorsun...</p>
+
+            <!-- Manual Redirect Button -->
+            <button onclick="window.location.href='https://hizliyim.com'" class="action-btn">
+                Şimdi Geri Dön ⚡
+            </button>
+            
+            <div class="mt-6 text-xs opacity-40">
+                hizliyim.com © 2026 - Tüm Hakları Saklıdır.
+            </div>
+        </div>
+    </div>
+</body>
+</html>
