@@ -1,0 +1,2049 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta name="theme-color" content="#050507">
+
+    <title>Şu Anda Çevrimdışıyız | hizliyim.com</title>
+
+    <link rel="icon" type="image/png" href="sonlogo.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+        @font-face {
+            font-family: "HizliFont";
+            src: url("font.woff2") format("woff2");
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            color-scheme: dark;
+
+            --background: #050507;
+            --panel-background: rgba(12, 13, 17, 0.68);
+            --panel-border: rgba(255, 255, 255, 0.13);
+
+            --primary-text: rgba(255, 255, 255, 0.97);
+            --secondary-text: rgba(255, 255, 255, 0.55);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            background: var(--background);
+        }
+
+        body {
+            min-height: 100vh;
+            min-height: 100svh;
+            min-height: 100dvh;
+
+            position: relative;
+            overflow: hidden;
+
+            font-family: "HizliFont", "Inter", sans-serif;
+            color: white;
+
+            background:
+                radial-gradient(
+                    circle at 50% 40%,
+                    rgba(24, 39, 68, 0.17),
+                    transparent 44%
+                ),
+                linear-gradient(
+                    180deg,
+                    #08090d 0%,
+                    #050507 55%,
+                    #030305 100%
+                );
+
+            isolation: isolate;
+        }
+
+        /* Hareketli noktalı arka plan */
+
+        #dot-canvas {
+            position: fixed;
+            inset: 0;
+
+            width: 100%;
+            height: 100%;
+
+            z-index: 0;
+            pointer-events: none;
+
+            contain: strict;
+            transform: translateZ(0);
+        }
+
+        .background-overlay {
+            position: fixed;
+            inset: 0;
+
+            z-index: 1;
+            pointer-events: none;
+
+            background:
+                radial-gradient(
+                    ellipse at center,
+                    transparent 9%,
+                    rgba(0, 0, 0, 0.12) 58%,
+                    rgba(0, 0, 0, 0.62) 100%
+                );
+        }
+
+        /* Sayfa alanı */
+
+        .page-content {
+            width: 100%;
+
+            height: 100vh;
+            height: 100svh;
+            height: 100dvh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            position: relative;
+            z-index: 2;
+
+            padding:
+                max(14px, env(safe-area-inset-top))
+                max(18px, env(safe-area-inset-right))
+                max(14px, env(safe-area-inset-bottom))
+                max(18px, env(safe-area-inset-left));
+        }
+
+        /* Ana cam panel */
+
+        .glass-panel {
+            width: min(78vw, 760px);
+            max-width: calc(100vw - 40px);
+
+            height: min(
+                760px,
+                calc(100dvh - 28px)
+            );
+
+            max-height: calc(100dvh - 28px);
+            min-height: 0;
+
+            display: grid;
+            place-items: center;
+
+            position: relative;
+            overflow: hidden;
+
+            padding: clamp(12px, 2.2vmin, 24px);
+
+            border: 1px solid var(--panel-border);
+            border-radius: clamp(24px, 3vw, 46px);
+
+            text-align: center;
+
+            background:
+                radial-gradient(
+                    circle at 17% 8%,
+                    rgba(255, 255, 255, 0.065),
+                    transparent 31%
+                ),
+                radial-gradient(
+                    circle at 88% 90%,
+                    rgba(74, 126, 255, 0.045),
+                    transparent 32%
+                ),
+                linear-gradient(
+                    145deg,
+                    rgba(255, 255, 255, 0.062),
+                    rgba(255, 255, 255, 0.014) 42%,
+                    rgba(255, 255, 255, 0.034)
+                ),
+                var(--panel-background);
+
+            box-shadow:
+                0 42px 110px rgba(0, 0, 0, 0.7),
+                0 14px 40px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.13),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+
+            backdrop-filter:
+                blur(15px)
+                saturate(128%)
+                brightness(84%);
+
+            -webkit-backdrop-filter:
+                blur(15px)
+                saturate(128%)
+                brightness(84%);
+
+            animation:
+                panelEntrance
+                0.8s
+                cubic-bezier(0.18, 0.8, 0.22, 1)
+                both;
+
+            isolation: isolate;
+            contain: layout paint style;
+        }
+
+        .glass-panel::before {
+            content: "";
+
+            position: absolute;
+            inset: 0;
+
+            z-index: 1;
+            pointer-events: none;
+
+            border-radius: inherit;
+
+            background:
+                linear-gradient(
+                    125deg,
+                    rgba(255, 255, 255, 0.085),
+                    transparent 20%,
+                    transparent 75%,
+                    rgba(110, 160, 255, 0.035)
+                );
+        }
+
+        .glass-panel::after {
+            content: "";
+
+            position: absolute;
+            inset: 1px;
+
+            z-index: 1;
+            pointer-events: none;
+
+            border-radius: inherit;
+
+            border-top: 1px solid rgba(255, 255, 255, 0.075);
+            border-left: 1px solid rgba(255, 255, 255, 0.035);
+        }
+
+        @keyframes panelEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Üstten başlayan silik logo */
+
+        .panel-watermark {
+            position: absolute;
+
+            top: 0;
+            left: 0;
+
+            width: 100%;
+            height: 56%;
+
+            z-index: 0;
+
+            overflow: hidden;
+            pointer-events: none;
+            user-select: none;
+
+            -webkit-mask-image:
+                linear-gradient(
+                    to bottom,
+                    #000 0%,
+                    #000 7%,
+                    rgba(0, 0, 0, 0.9) 14%,
+                    rgba(0, 0, 0, 0.62) 22%,
+                    rgba(0, 0, 0, 0.31) 30%,
+                    rgba(0, 0, 0, 0.1) 37%,
+                    rgba(0, 0, 0, 0.02) 43%,
+                    transparent 49%
+                );
+
+            mask-image:
+                linear-gradient(
+                    to bottom,
+                    #000 0%,
+                    #000 7%,
+                    rgba(0, 0, 0, 0.9) 14%,
+                    rgba(0, 0, 0, 0.62) 22%,
+                    rgba(0, 0, 0, 0.31) 30%,
+                    rgba(0, 0, 0, 0.1) 37%,
+                    rgba(0, 0, 0, 0.02) 43%,
+                    transparent 49%
+                );
+
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+
+            -webkit-mask-size: 100% 100%;
+            mask-size: 100% 100%;
+
+            contain: paint;
+        }
+
+        .panel-watermark-logo {
+            position: absolute;
+
+            top: clamp(-210px, -22vh, -145px);
+            left: 50%;
+
+            width: clamp(
+                350px,
+                min(54vw, 60vh),
+                560px
+            );
+
+            height: auto;
+
+            display: block;
+            object-fit: contain;
+
+            transform:
+                translateX(-50%)
+                scale(1.55);
+
+            transform-origin: center top;
+
+            opacity: 0.047;
+
+            filter:
+                brightness(0)
+                invert(1)
+                grayscale(1)
+                blur(0.3px)
+                drop-shadow(
+                    0 0 15px
+                    rgba(210, 230, 255, 0.03)
+                )
+                drop-shadow(
+                    0 0 36px
+                    rgba(80, 140, 230, 0.02)
+                );
+
+            animation:
+                watermarkBreath
+                8s
+                ease-in-out
+                infinite;
+
+            will-change: transform, opacity;
+        }
+
+        @keyframes watermarkBreath {
+            0%,
+            100% {
+                opacity: 0.043;
+
+                transform:
+                    translateX(-50%)
+                    scale(1.55);
+            }
+
+            50% {
+                opacity: 0.05;
+
+                transform:
+                    translateX(-50%)
+                    scale(1.565);
+            }
+        }
+
+        /* Panel içeriği */
+
+        .panel-inner {
+            --fit-scale: 1;
+
+            width: min(100%, 700px);
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            position: relative;
+            z-index: 3;
+
+            padding:
+                clamp(12px, 2.5vh, 28px)
+                clamp(10px, 2vw, 24px);
+
+            transform: scale(var(--fit-scale));
+            transform-origin: center center;
+
+            contain: layout style;
+        }
+
+        .hero-visual {
+            width: min(100%, 620px);
+
+            position: relative;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            margin-bottom: clamp(10px, 2vh, 20px);
+        }
+
+        /* Sade dönen loader */
+
+        .simple-loader {
+            width: clamp(17px, 2.7vh, 22px);
+            height: clamp(17px, 2.7vh, 22px);
+
+            margin-bottom: clamp(10px, 2.2vh, 18px);
+
+            position: relative;
+            z-index: 5;
+
+            flex: 0 0 auto;
+
+            border: 2px solid rgba(255, 255, 255, 0.065);
+            border-top-color: rgba(255, 65, 96, 0.95);
+            border-right-color: rgba(255, 65, 96, 0.27);
+
+            border-radius: 50%;
+
+            box-shadow:
+                0 0 7px rgba(255, 48, 84, 0.17);
+
+            animation:
+                simpleLoaderSpin
+                1.05s
+                linear
+                infinite;
+
+            will-change: transform;
+        }
+
+        @keyframes simpleLoaderSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 423 cam yazısı */
+
+        .glass-number-stage {
+            width: min(100%, 620px);
+
+            margin: 0 auto;
+
+            padding:
+                0
+                clamp(8px, 1.5vw, 20px)
+                clamp(5px, 1vh, 12px);
+
+            position: relative;
+            z-index: 6;
+
+            overflow: visible;
+            perspective: 1100px;
+        }
+
+        .glass-number {
+            --light-x: 50%;
+            --light-y: 24%;
+
+            --tilt-x: 0deg;
+            --tilt-y: 0deg;
+
+            --refract-x: 0px;
+            --refract-y: 0px;
+
+            display: inline-block;
+            position: relative;
+
+            padding:
+                0.03em
+                0.16em
+                0.07em
+                0.06em;
+
+            font-family: "Inter", Arial, sans-serif;
+
+            font-size: clamp(
+                4.6rem,
+                min(17vw, 18vh),
+                9.6rem
+            );
+
+            font-weight: 900;
+            font-variant-numeric: tabular-nums;
+
+            line-height: 0.86;
+            letter-spacing: -0.075em;
+            white-space: nowrap;
+
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+
+            background:
+                radial-gradient(
+                    ellipse 90% 125%
+                    at var(--light-x) var(--light-y),
+
+                    rgba(255, 255, 255, 0.7) 0%,
+                    rgba(239, 247, 255, 0.53) 9%,
+                    rgba(201, 224, 252, 0.34) 22%,
+                    rgba(147, 187, 235, 0.18) 38%,
+                    rgba(92, 142, 207, 0.065) 57%,
+                    transparent 80%
+                ),
+                linear-gradient(
+                    145deg,
+                    rgba(255, 255, 255, 0.34) 0%,
+                    rgba(220, 231, 247, 0.14) 20%,
+                    rgba(125, 144, 174, 0.085) 45%,
+                    rgba(205, 224, 251, 0.2) 72%,
+                    rgba(255, 255, 255, 0.29) 100%
+                );
+
+            background-clip: text;
+            -webkit-background-clip: text;
+
+            filter:
+                drop-shadow(
+                    0 15px 16px
+                    rgba(0, 0, 0, 0.38)
+                )
+                drop-shadow(
+                    0 2px 1px
+                    rgba(255, 255, 255, 0.08)
+                )
+                drop-shadow(
+                    0 0 24px
+                    rgba(125, 178, 240, 0.075)
+                );
+
+            transform:
+                perspective(1100px)
+                rotateX(var(--tilt-x))
+                rotateY(var(--tilt-y))
+                translateZ(0);
+
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        .glass-number::before {
+            content: attr(data-text);
+
+            position: absolute;
+            inset: 0;
+
+            z-index: 1;
+            pointer-events: none;
+
+            padding: inherit;
+
+            font: inherit;
+            line-height: inherit;
+            letter-spacing: inherit;
+            white-space: inherit;
+
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+
+            background:
+                radial-gradient(
+                    ellipse 105% 140%
+                    at var(--light-x) var(--light-y),
+
+                    rgba(255, 255, 255, 0.4) 0%,
+                    rgba(218, 237, 255, 0.27) 17%,
+                    rgba(164, 203, 247, 0.14) 36%,
+                    rgba(88, 143, 211, 0.05) 56%,
+                    transparent 79%
+                ),
+                linear-gradient(
+                    115deg,
+                    transparent 8%,
+                    rgba(255, 255, 255, 0.065) 31%,
+                    rgba(132, 181, 238, 0.04) 53%,
+                    transparent 80%
+                );
+
+            background-clip: text;
+            -webkit-background-clip: text;
+
+            opacity: 0.62;
+            mix-blend-mode: screen;
+
+            filter: blur(1.05px);
+
+            transform:
+                translate3d(
+                    var(--refract-x),
+                    var(--refract-y),
+                    1px
+                );
+        }
+
+        .glass-number::after {
+            content: attr(data-text);
+
+            position: absolute;
+            inset: 0;
+
+            z-index: 2;
+            pointer-events: none;
+
+            padding: inherit;
+
+            font: inherit;
+            line-height: inherit;
+            letter-spacing: inherit;
+            white-space: inherit;
+
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+
+            background:
+                repeating-linear-gradient(
+                    115deg,
+
+                    rgba(255, 255, 255, 0.038) 0,
+                    rgba(255, 255, 255, 0.038) 1px,
+
+                    transparent 1px,
+                    transparent 5px
+                );
+
+            background-clip: text;
+            -webkit-background-clip: text;
+
+            opacity: 0.18;
+            mix-blend-mode: screen;
+        }
+
+        /* Metinler */
+
+        .offline-title {
+            width: 100%;
+            max-width: 650px;
+
+            margin: 0;
+
+            position: relative;
+            z-index: 6;
+
+            font-family: "Inter", sans-serif;
+
+            font-size: clamp(
+                1.8rem,
+                min(5.8vw, 7vh),
+                4.25rem
+            );
+
+            font-weight: 800;
+            line-height: 1.05;
+
+            letter-spacing:
+                clamp(-2.6px, -0.25vw, -1px);
+
+            color: var(--primary-text);
+            text-wrap: balance;
+
+            text-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.5),
+                0 0 24px rgba(255, 255, 255, 0.03);
+        }
+
+        .offline-subtitle {
+            max-width: 520px;
+
+            margin:
+                clamp(9px, 1.8vh, 19px)
+                0
+                0;
+
+            position: relative;
+            z-index: 6;
+
+            font-family: "Inter", sans-serif;
+
+            font-size: clamp(
+                0.9rem,
+                min(2vw, 2.5vh),
+                1.3rem
+            );
+
+            font-weight: 400;
+            line-height: 1.5;
+            letter-spacing: 0.01em;
+
+            color: var(--secondary-text);
+        }
+
+        .divider {
+            width: min(210px, 52%);
+            height: 1px;
+
+            margin:
+                clamp(18px, 3.5vh, 38px)
+                0
+                0;
+
+            position: relative;
+            z-index: 6;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.22),
+                    transparent
+                );
+        }
+
+        .brand-footer {
+            margin-top: clamp(12px, 2.5vh, 25px);
+
+            position: relative;
+            z-index: 6;
+
+            font-family: "Inter", sans-serif;
+
+            font-size: clamp(
+                0.66rem,
+                min(1.5vw, 1.8vh),
+                0.84rem
+            );
+
+            font-weight: 500;
+            letter-spacing: 0.075em;
+
+            color: rgba(255, 255, 255, 0.32);
+        }
+
+        /* Tablet */
+
+        @media (min-width: 561px) and (max-width: 1000px) {
+            .glass-panel {
+                width: min(84vw, 700px);
+                max-width: calc(100vw - 48px);
+            }
+
+            .panel-inner {
+                width: min(100%, 650px);
+            }
+
+            .panel-watermark-logo {
+                top: clamp(-190px, -20vh, -125px);
+
+                width: clamp(
+                    330px,
+                    min(65vw, 57vh),
+                    510px
+                );
+            }
+        }
+
+        /* Telefon */
+
+        @media (max-width: 560px) {
+            .page-content {
+                padding:
+                    max(12px, env(safe-area-inset-top))
+                    max(14px, env(safe-area-inset-right))
+                    max(12px, env(safe-area-inset-bottom))
+                    max(14px, env(safe-area-inset-left));
+            }
+
+            .glass-panel {
+                width: calc(100vw - 28px);
+                max-width: 520px;
+
+                height: calc(100dvh - 24px);
+                max-height: calc(100dvh - 24px);
+
+                padding: 10px;
+                border-radius: 26px;
+            }
+
+            .panel-inner {
+                width: 100%;
+                padding: 14px 8px;
+            }
+
+            .hero-visual {
+                width: 100%;
+            }
+
+            .panel-watermark {
+                height: 54%;
+            }
+
+            .panel-watermark-logo {
+                top: clamp(-150px, -17vh, -90px);
+
+                width: clamp(
+                    285px,
+                    min(94vw, 49vh),
+                    420px
+                );
+            }
+
+            .glass-number-stage {
+                width: 100%;
+                padding: 0 4px 7px;
+            }
+
+            .glass-number {
+                font-size: clamp(
+                    4.6rem,
+                    min(26vw, 17vh),
+                    7.2rem
+                );
+
+                letter-spacing: -0.068em;
+
+                padding-right: 0.17em;
+                padding-left: 0.055em;
+            }
+
+            .offline-title {
+                max-width: 500px;
+
+                font-size: clamp(
+                    1.75rem,
+                    min(10vw, 6.5vh),
+                    3rem
+                );
+
+                line-height: 1.08;
+            }
+
+            .offline-subtitle {
+                max-width: 320px;
+            }
+        }
+
+        /* Kısa ekranlar */
+
+        @media (max-height: 650px) {
+            .page-content {
+                padding:
+                    max(8px, env(safe-area-inset-top))
+                    max(12px, env(safe-area-inset-right))
+                    max(8px, env(safe-area-inset-bottom))
+                    max(12px, env(safe-area-inset-left));
+            }
+
+            .glass-panel {
+                height: calc(100dvh - 16px);
+                max-height: calc(100dvh - 16px);
+
+                padding: 8px;
+                border-radius: 24px;
+            }
+
+            .panel-inner {
+                padding: 10px 8px;
+            }
+
+            .simple-loader {
+                margin-bottom: 8px;
+            }
+
+            .hero-visual {
+                margin-bottom: 8px;
+            }
+
+            .offline-subtitle {
+                margin-top: 7px;
+            }
+
+            .divider {
+                margin-top: 13px;
+            }
+
+            .brand-footer {
+                margin-top: 9px;
+            }
+        }
+
+        /* Yatay telefon */
+
+        @media (max-height: 560px) and (orientation: landscape) {
+            .glass-panel {
+                width: min(76vw, 700px);
+                max-width: calc(100vw - 36px);
+            }
+
+            .panel-inner {
+                width: min(100%, 620px);
+                padding: 7px 10px;
+            }
+
+            .simple-loader {
+                width: 17px;
+                height: 17px;
+            }
+
+            .panel-watermark {
+                height: 59%;
+            }
+
+            .panel-watermark-logo {
+                top: -135px;
+
+                width: clamp(
+                    270px,
+                    78vh,
+                    420px
+                );
+            }
+
+            .glass-number {
+                font-size: clamp(
+                    3.8rem,
+                    19vh,
+                    6rem
+                );
+            }
+
+            .offline-title {
+                font-size: clamp(
+                    1.55rem,
+                    7.3vh,
+                    2.8rem
+                );
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            .glass-number {
+                transform: none !important;
+            }
+
+            .panel-watermark-logo {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas
+        id="dot-canvas"
+        aria-hidden="true"
+    ></canvas>
+
+    <div
+        class="background-overlay"
+        aria-hidden="true"
+    ></div>
+
+    <main
+        class="page-content"
+        aria-labelledby="offline-title"
+    >
+        <section
+            class="glass-panel"
+            id="glass-panel"
+        >
+            <div
+                class="panel-watermark"
+                aria-hidden="true"
+            >
+                <img
+                    src="sonlogo.png"
+                    alt=""
+                    class="panel-watermark-logo"
+                    onerror="this.style.display='none'"
+                >
+            </div>
+
+            <div
+                class="panel-inner"
+                id="panel-inner"
+            >
+                <div class="hero-visual">
+                    <div
+                        class="simple-loader"
+                        role="status"
+                        aria-label="Yükleniyor"
+                    ></div>
+
+                    <div class="glass-number-stage">
+                        <div
+                            id="glass-number"
+                            class="glass-number"
+                            data-text="423"
+                            aria-label="Hata kodu 423"
+                        >
+                            423
+                        </div>
+                    </div>
+                </div>
+
+                <h1
+                    id="offline-title"
+                    class="offline-title"
+                >
+                    Şu Anda Çevrimdışıyız
+                </h1>
+
+                <p
+                    class="offline-subtitle"
+                    lang="en"
+                >
+                    We’re currently offline.
+                </p>
+
+                <div
+                    class="divider"
+                    aria-hidden="true"
+                ></div>
+
+                <footer class="brand-footer">
+                    hizliyim.com • HizliSystems
+                </footer>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        /*
+         * Panel içeriğini ekran boyutuna sığdırır.
+         */
+
+        (() => {
+            const panel =
+                document.getElementById("glass-panel");
+
+            const inner =
+                document.getElementById("panel-inner");
+
+            let frameId = 0;
+            let resizeTimer = 0;
+
+            function fitPanelContent() {
+                cancelAnimationFrame(frameId);
+
+                frameId = requestAnimationFrame(() => {
+                    inner.style.setProperty(
+                        "--fit-scale",
+                        "1"
+                    );
+
+                    const style =
+                        getComputedStyle(panel);
+
+                    const horizontalPadding =
+                        parseFloat(style.paddingLeft) +
+                        parseFloat(style.paddingRight);
+
+                    const verticalPadding =
+                        parseFloat(style.paddingTop) +
+                        parseFloat(style.paddingBottom);
+
+                    const availableWidth =
+                        Math.max(
+                            1,
+                            panel.clientWidth -
+                            horizontalPadding
+                        );
+
+                    const availableHeight =
+                        Math.max(
+                            1,
+                            panel.clientHeight -
+                            verticalPadding
+                        );
+
+                    const contentWidth =
+                        Math.max(
+                            1,
+                            inner.scrollWidth
+                        );
+
+                    const contentHeight =
+                        Math.max(
+                            1,
+                            inner.scrollHeight
+                        );
+
+                    const scale =
+                        Math.min(
+                            1,
+                            availableWidth / contentWidth,
+                            availableHeight / contentHeight
+                        );
+
+                    inner.style.setProperty(
+                        "--fit-scale",
+                        scale.toFixed(4)
+                    );
+                });
+            }
+
+            function scheduleFit() {
+                clearTimeout(resizeTimer);
+
+                resizeTimer = setTimeout(
+                    fitPanelContent,
+                    80
+                );
+            }
+
+            window.addEventListener(
+                "resize",
+                scheduleFit,
+                { passive: true }
+            );
+
+            window.addEventListener(
+                "orientationchange",
+                scheduleFit,
+                { passive: true }
+            );
+
+            if ("ResizeObserver" in window) {
+                const observer =
+                    new ResizeObserver(
+                        scheduleFit
+                    );
+
+                observer.observe(panel);
+            }
+
+            if (document.fonts?.ready) {
+                document.fonts.ready.then(
+                    fitPanelContent
+                );
+            }
+
+            window.addEventListener(
+                "load",
+                fitPanelContent,
+                { once: true }
+            );
+
+            fitPanelContent();
+        })();
+
+        /*
+         * 423 fare ışığı.
+         * Yalnızca hareket gerektiğinde animasyon çalışır.
+         */
+
+        (() => {
+            const number =
+                document.getElementById(
+                    "glass-number"
+                );
+
+            const reduceMotion =
+                window.matchMedia(
+                    "(prefers-reduced-motion: reduce)"
+                ).matches;
+
+            let targetX = 0.5;
+            let targetY = 0.24;
+
+            let currentX = 0.5;
+            let currentY = 0.24;
+
+            let targetTiltX = 0;
+            let targetTiltY = 0;
+
+            let currentTiltX = 0;
+            let currentTiltY = 0;
+
+            let animationFrame = 0;
+            let animating = false;
+
+            function clamp(
+                value,
+                minimum,
+                maximum
+            ) {
+                return Math.max(
+                    minimum,
+                    Math.min(maximum, value)
+                );
+            }
+
+            function startAnimation() {
+                if (animating) {
+                    return;
+                }
+
+                animating = true;
+
+                animationFrame =
+                    requestAnimationFrame(
+                        animateNumber
+                    );
+            }
+
+            function updatePointer(event) {
+                const rect =
+                    number.getBoundingClientRect();
+
+                if (
+                    rect.width <= 0 ||
+                    rect.height <= 0
+                ) {
+                    return;
+                }
+
+                targetX = clamp(
+                    (
+                        event.clientX -
+                        rect.left
+                    ) / rect.width,
+                    -0.18,
+                    1.18
+                );
+
+                targetY = clamp(
+                    (
+                        event.clientY -
+                        rect.top
+                    ) / rect.height,
+                    -0.25,
+                    1.25
+                );
+
+                if (!reduceMotion) {
+                    targetTiltY = clamp(
+                        (targetX - 0.5) * 2.8,
+                        -1.4,
+                        1.4
+                    );
+
+                    targetTiltX = clamp(
+                        (0.5 - targetY) * 2.4,
+                        -1.2,
+                        1.2
+                    );
+                }
+
+                startAnimation();
+            }
+
+            function resetPointer() {
+                targetX = 0.5;
+                targetY = 0.24;
+
+                targetTiltX = 0;
+                targetTiltY = 0;
+
+                startAnimation();
+            }
+
+            function animateNumber() {
+                const lightSmoothing = 0.06;
+                const tiltSmoothing = 0.075;
+
+                currentX +=
+                    (targetX - currentX) *
+                    lightSmoothing;
+
+                currentY +=
+                    (targetY - currentY) *
+                    lightSmoothing;
+
+                currentTiltX +=
+                    (
+                        targetTiltX -
+                        currentTiltX
+                    ) *
+                    tiltSmoothing;
+
+                currentTiltY +=
+                    (
+                        targetTiltY -
+                        currentTiltY
+                    ) *
+                    tiltSmoothing;
+
+                const refractX =
+                    (currentX - 0.5) * -1.6;
+
+                const refractY =
+                    (currentY - 0.5) * -1.2;
+
+                number.style.setProperty(
+                    "--light-x",
+                    `${currentX * 100}%`
+                );
+
+                number.style.setProperty(
+                    "--light-y",
+                    `${currentY * 100}%`
+                );
+
+                number.style.setProperty(
+                    "--tilt-x",
+                    `${currentTiltX}deg`
+                );
+
+                number.style.setProperty(
+                    "--tilt-y",
+                    `${currentTiltY}deg`
+                );
+
+                number.style.setProperty(
+                    "--refract-x",
+                    `${refractX}px`
+                );
+
+                number.style.setProperty(
+                    "--refract-y",
+                    `${refractY}px`
+                );
+
+                const remainingMovement =
+                    Math.abs(targetX - currentX) +
+                    Math.abs(targetY - currentY) +
+                    Math.abs(
+                        targetTiltX -
+                        currentTiltX
+                    ) +
+                    Math.abs(
+                        targetTiltY -
+                        currentTiltY
+                    );
+
+                if (remainingMovement > 0.0015) {
+                    animationFrame =
+                        requestAnimationFrame(
+                            animateNumber
+                        );
+                } else {
+                    animating = false;
+                    animationFrame = 0;
+                }
+            }
+
+            window.addEventListener(
+                "pointermove",
+                updatePointer,
+                { passive: true }
+            );
+
+            window.addEventListener(
+                "pointerdown",
+                updatePointer,
+                { passive: true }
+            );
+
+            document.documentElement.addEventListener(
+                "pointerleave",
+                resetPointer,
+                { passive: true }
+            );
+
+            window.addEventListener(
+                "blur",
+                resetPointer
+            );
+
+            document.addEventListener(
+                "visibilitychange",
+                () => {
+                    if (document.hidden) {
+                        cancelAnimationFrame(
+                            animationFrame
+                        );
+
+                        animationFrame = 0;
+                        animating = false;
+                    }
+                }
+            );
+        })();
+
+        /*
+         * Optimize edilmiş hareketli nokta arka planı.
+         */
+
+        (() => {
+            const canvas =
+                document.getElementById(
+                    "dot-canvas"
+                );
+
+            const context =
+                canvas.getContext(
+                    "2d",
+                    {
+                        alpha: true,
+                        desynchronized: true
+                    }
+                );
+
+            if (!context) {
+                return;
+            }
+
+            const reduceMotion =
+                window.matchMedia(
+                    "(prefers-reduced-motion: reduce)"
+                ).matches;
+
+            const TAU =
+                Math.PI * 2;
+
+            const LUT_SIZE =
+                2048;
+
+            const LUT_MASK =
+                LUT_SIZE - 1;
+
+            const LUT_MULTIPLIER =
+                LUT_SIZE / TAU;
+
+            const sineTable =
+                new Float32Array(
+                    LUT_SIZE
+                );
+
+            for (
+                let index = 0;
+                index < LUT_SIZE;
+                index++
+            ) {
+                sineTable[index] =
+                    Math.sin(
+                        index /
+                        LUT_SIZE *
+                        TAU
+                    );
+            }
+
+            function fastSin(value) {
+                const index =
+                    (
+                        (
+                            value *
+                            LUT_MULTIPLIER
+                        ) | 0
+                    ) &
+                    LUT_MASK;
+
+                return sineTable[index];
+            }
+
+            let width = 0;
+            let height = 0;
+            let pixelRatio = 1;
+            let count = 0;
+
+            let positionsX =
+                new Float32Array(0);
+
+            let positionsY =
+                new Float32Array(0);
+
+            let phases =
+                new Float32Array(0);
+
+            let speeds =
+                new Float32Array(0);
+
+            let baseOpacities =
+                new Float32Array(0);
+
+            let pulseAmounts =
+                new Float32Array(0);
+
+            let sizes =
+                new Float32Array(0);
+
+            let animationFrame = 0;
+            let resizeTimer = 0;
+
+            /*
+             * Fare hareket etmese bile active true kalır.
+             * Yalnızca pencerenin dışına çıkınca kapanır.
+             */
+
+            const pointer = {
+                x: -1000,
+                y: -1000,
+                active: false
+            };
+
+            const opacityLevels = [
+                0.1,
+                0.17,
+                0.26,
+                0.38,
+                0.52,
+                0.7,
+                0.9
+            ];
+
+            function randomBetween(
+                minimum,
+                maximum
+            ) {
+                return (
+                    Math.random() *
+                    (maximum - minimum) +
+                    minimum
+                );
+            }
+
+            function createDots() {
+                const baseSpacing =
+                    window.innerWidth <= 600
+                        ? 15
+                        : 14;
+
+                const screenPixels =
+                    width * height;
+
+                const spacing =
+                    screenPixels > 3400000
+                        ? baseSpacing + 1
+                        : baseSpacing;
+
+                const columns =
+                    Math.ceil(
+                        width / spacing
+                    ) + 2;
+
+                const rows =
+                    Math.ceil(
+                        height / spacing
+                    ) + 2;
+
+                count =
+                    columns * rows;
+
+                positionsX =
+                    new Float32Array(count);
+
+                positionsY =
+                    new Float32Array(count);
+
+                phases =
+                    new Float32Array(count);
+
+                speeds =
+                    new Float32Array(count);
+
+                baseOpacities =
+                    new Float32Array(count);
+
+                pulseAmounts =
+                    new Float32Array(count);
+
+                sizes =
+                    new Float32Array(count);
+
+                const offsetX =
+                    (
+                        width -
+                        (columns - 1) *
+                        spacing
+                    ) / 2;
+
+                const offsetY =
+                    (
+                        height -
+                        (rows - 1) *
+                        spacing
+                    ) / 2;
+
+                let dotIndex = 0;
+
+                for (
+                    let row = 0;
+                    row < rows;
+                    row++
+                ) {
+                    for (
+                        let column = 0;
+                        column < columns;
+                        column++
+                    ) {
+                        positionsX[dotIndex] =
+                            offsetX +
+                            column * spacing;
+
+                        positionsY[dotIndex] =
+                            offsetY +
+                            row * spacing;
+
+                        phases[dotIndex] =
+                            randomBetween(
+                                0,
+                                TAU
+                            );
+
+                        speeds[dotIndex] =
+                            randomBetween(
+                                0.00055,
+                                0.00125
+                            );
+
+                        baseOpacities[dotIndex] =
+                            randomBetween(
+                                0.045,
+                                0.2
+                            );
+
+                        pulseAmounts[dotIndex] =
+                            randomBetween(
+                                0.06,
+                                0.3
+                            );
+
+                        sizes[dotIndex] =
+                            randomBetween(
+                                0.8,
+                                1.45
+                            );
+
+                        dotIndex++;
+                    }
+                }
+            }
+
+            function resizeCanvas() {
+                width =
+                    window.innerWidth;
+
+                height =
+                    window.innerHeight;
+
+                const screenPixels =
+                    width * height;
+
+                const ratioLimit =
+                    screenPixels > 3000000
+                        ? 1.25
+                        : 1.5;
+
+                pixelRatio =
+                    Math.min(
+                        window.devicePixelRatio ||
+                        1,
+                        ratioLimit
+                    );
+
+                canvas.width =
+                    Math.floor(
+                        width *
+                        pixelRatio
+                    );
+
+                canvas.height =
+                    Math.floor(
+                        height *
+                        pixelRatio
+                    );
+
+                canvas.style.width =
+                    width + "px";
+
+                canvas.style.height =
+                    height + "px";
+
+                context.setTransform(
+                    pixelRatio,
+                    0,
+                    0,
+                    pixelRatio,
+                    0,
+                    0
+                );
+
+                context.imageSmoothingEnabled =
+                    false;
+
+                createDots();
+
+                if (reduceMotion) {
+                    drawDots(
+                        performance.now()
+                    );
+                }
+            }
+
+            function drawDots(time) {
+                context.clearRect(
+                    0,
+                    0,
+                    width,
+                    height
+                );
+
+                const bucketPaths =
+                    opacityLevels.map(
+                        () => new Path2D()
+                    );
+
+                const glowPath =
+                    new Path2D();
+
+                /*
+                 * Zaman aşımı yok.
+                 * Fare sabit dursa da ışık aktif kalır.
+                 */
+
+                const pointerActive =
+                    pointer.active;
+
+                const pointerRadius =
+                    165;
+
+                const pointerRadiusSquared =
+                    pointerRadius *
+                    pointerRadius;
+
+                const movingOffset =
+                    fastSin(
+                        time * 0.00024
+                    ) * 1.2;
+
+                for (
+                    let index = 0;
+                    index < count;
+                    index++
+                ) {
+                    const x =
+                        positionsX[index];
+
+                    const y =
+                        positionsY[index];
+
+                    const blink =
+                        fastSin(
+                            phases[index] +
+                            time *
+                            speeds[index]
+                        ) *
+                        0.5 +
+                        0.5;
+
+                    let wave = 0;
+
+                    if (!reduceMotion) {
+                        const waveOne =
+                            fastSin(
+                                x * 0.021 +
+                                y * 0.016 -
+                                time *
+                                0.00135 +
+                                movingOffset
+                            ) *
+                            0.5 +
+                            0.5;
+
+                        const waveTwo =
+                            fastSin(
+                                x * -0.012 +
+                                y * 0.024 -
+                                time *
+                                0.00105
+                            ) *
+                            0.5 +
+                            0.5;
+
+                        wave =
+                            (
+                                waveOne *
+                                0.65 +
+                                waveTwo *
+                                0.35
+                            ) *
+                            0.2;
+                    }
+
+                    let pointerGlow = 0;
+
+                    if (pointerActive) {
+                        const deltaX =
+                            x - pointer.x;
+
+                        const deltaY =
+                            y - pointer.y;
+
+                        const distanceSquared =
+                            deltaX *
+                            deltaX +
+                            deltaY *
+                            deltaY;
+
+                        if (
+                            distanceSquared <
+                            pointerRadiusSquared
+                        ) {
+                            const normalized =
+                                1 -
+                                distanceSquared /
+                                pointerRadiusSquared;
+
+                            pointerGlow =
+                                normalized *
+                                normalized *
+                                0.52;
+                        }
+                    }
+
+                    const finalOpacity =
+                        Math.min(
+                            0.91,
+
+                            baseOpacities[index] +
+                            blink *
+                            pulseAmounts[index] +
+                            wave +
+                            pointerGlow
+                        );
+
+                    const finalSize =
+                        sizes[index] +
+                        wave * 0.34 +
+                        pointerGlow * 0.62;
+
+                    const bucketIndex =
+                        Math.min(
+                            opacityLevels.length -
+                            1,
+
+                            Math.max(
+                                0,
+                                Math.floor(
+                                    finalOpacity *
+                                    opacityLevels.length
+                                )
+                            )
+                        );
+
+                    const diameter =
+                        finalSize * 2;
+
+                    bucketPaths[
+                        bucketIndex
+                    ].rect(
+                        x - finalSize,
+                        y - finalSize,
+                        diameter,
+                        diameter
+                    );
+
+                    if (
+                        finalOpacity >
+                        0.73
+                    ) {
+                        const glowSize =
+                            finalSize * 1.9;
+
+                        glowPath.rect(
+                            x - glowSize,
+                            y - glowSize,
+                            glowSize * 2,
+                            glowSize * 2
+                        );
+                    }
+                }
+
+                for (
+                    let index = 0;
+                    index <
+                    opacityLevels.length;
+                    index++
+                ) {
+                    const opacity =
+                        opacityLevels[index];
+
+                    const whiteValue =
+                        Math.floor(
+                            160 +
+                            opacity * 95
+                        );
+
+                    context.fillStyle =
+                        `rgba(
+                            ${whiteValue},
+                            ${whiteValue},
+                            ${whiteValue},
+                            ${opacity}
+                        )`;
+
+                    context.fill(
+                        bucketPaths[index]
+                    );
+                }
+
+                context.fillStyle =
+                    "rgba(205, 228, 255, 0.028)";
+
+                context.fill(
+                    glowPath
+                );
+            }
+
+            function animate(time) {
+                drawDots(time);
+
+                animationFrame =
+                    requestAnimationFrame(
+                        animate
+                    );
+            }
+
+            function startAnimation() {
+                cancelAnimationFrame(
+                    animationFrame
+                );
+
+                if (reduceMotion) {
+                    drawDots(
+                        performance.now()
+                    );
+
+                    animationFrame = 0;
+                    return;
+                }
+
+                animationFrame =
+                    requestAnimationFrame(
+                        animate
+                    );
+            }
+
+            function scheduleResize() {
+                clearTimeout(
+                    resizeTimer
+                );
+
+                resizeTimer =
+                    setTimeout(
+                        () => {
+                            resizeCanvas();
+                            startAnimation();
+                        },
+                        100
+                    );
+            }
+
+            window.addEventListener(
+                "pointermove",
+                event => {
+                    pointer.x =
+                        event.clientX;
+
+                    pointer.y =
+                        event.clientY;
+
+                    pointer.active = true;
+                },
+                { passive: true }
+            );
+
+            window.addEventListener(
+                "pointerdown",
+                event => {
+                    pointer.x =
+                        event.clientX;
+
+                    pointer.y =
+                        event.clientY;
+
+                    pointer.active = true;
+                },
+                { passive: true }
+            );
+
+            document.documentElement.addEventListener(
+                "pointerleave",
+                () => {
+                    pointer.active = false;
+                },
+                { passive: true }
+            );
+
+            window.addEventListener(
+                "blur",
+                () => {
+                    pointer.active = false;
+                }
+            );
+
+            window.addEventListener(
+                "resize",
+                scheduleResize,
+                { passive: true }
+            );
+
+            window.addEventListener(
+                "orientationchange",
+                scheduleResize,
+                { passive: true }
+            );
+
+            document.addEventListener(
+                "visibilitychange",
+                () => {
+                    if (document.hidden) {
+                        cancelAnimationFrame(
+                            animationFrame
+                        );
+
+                        animationFrame = 0;
+                    } else {
+                        startAnimation();
+                    }
+                }
+            );
+
+            resizeCanvas();
+            startAnimation();
+        })();
+    </script>
+</body>
+</html>
