@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hizliyim.com - HizliSystems</title>
+    
+    <!-- Site Icon -->
+    <link rel="icon" type="image/png" href="sonlogo.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        const myFirebaseConfig = {
+            apiKey: "AIzaSyCP0Rd8CAfzYRPtakfdQWBqS5uBn045XpE",
+            authDomain: "hizliyimforum.firebaseapp.com",
+            databaseURL: "https://hizliyimforum-default-rtdb.firebaseio.com",
+            projectId: "hizliyimforum",
+            storageBucket: "hizliyimforum.firebasestorage.app",
+            messagingSenderId: "903963422468",
+            appId: "1:903963422468:web:936c368393585efd0cea51"
+        };
+
+        let db, auth, userId;
+
+        try {
+            const app = initializeApp(myFirebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+        } catch (e) {
+            console.error("Initialization error:", e);
+        }
+
+        // --- THEME MANAGEMENT ---
+        function checkTimeAndApplyTheme() {
+            const hour = new Date().getHours();
+            const body = document.body;
+            const isDayTime = hour >= 99 && hour < 20;
+
+            if (isDayTime) {
+                body.classList.add('day-mode');
+                body.classList.remove('night-mode');
+                initSnowEffects();
+            } else {
+                body.classList.add('night-mode');
+                body.classList.remove('day-mode');
+                initNightEffects();
+            }
+        }
+
+        // --- AUTH & LOGIC ---
+        async function authenticateUser() {
+            if (!auth) {
+                window.router.initialize(); 
+                return;
+            }
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    window.userId = userId;
+                } else {
+                    signInAnonymously(auth).then((cred) => {
+                        userId = cred.user.uid;
+                        window.userId = userId;
+                    });
+                }
+                window.router.initialize();
+            });
+            window.db = db;
+        }
+
+        async function saveRegistrationData(username, email, password) {
+            if (!window.db) return { success: false, message: "Baglanti yok." };
+            const userRef = doc(window.db, "users", email.toLowerCase());
+             try {
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) return { success: false, message: "Bu e-mail zaten kayitli." };
+
+                await setDoc(userRef, {
+                    username, email: email.toLowerCase(), password, 
+                    createdAt: new Date().toISOString(), status: 'pending'
+                });
+                return { success: true };
+            } catch (e) { return { success: false, message: "Bir hata olustu." }; }
+        }
+
+        async function verifyLoginCredentials(email, password) {
+             if (!window.db) return false;
+            const userRef = doc(window.db, "users", email.toLowerCase());
+            try {
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists() && docSnap.data().password === password) return true;
+                return false;
+            } catch (e) { return false; }
+        }
+
+        // --- ROUTER ---
+        const router = {
+            routes: { 
+                '#': 'login', 
+                '#/': 'login', 
+                '#/login': 'login', 
+                '#/register': 'register', 
+                '#/home': 'home',
+                '#/423': '423'
+            },
+            load: () => {
+                const hash = window.location.hash || '#/login';
+                const page = router.routes[hash] || 'login';
+                document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
+                const currentPage = document.getElementById(`page-${page}`);
+                if (currentPage) {
+                    currentPage.classList.remove('hidden');
+                    currentPage.classList.add('animate-pop-in');
+                }
+            },
+            initialize: () => {
+                window.addEventListener('hashchange', router.load);
+                router.load();
+            }
+        };
+        window.router = router;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            authenticateUser(); 
+            checkTimeAndApplyTheme();
+
+            document.getElementById('form-login')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                toggleLoading('login', true);
+                const email = document.getElementById('login-email').value.trim();
+                const password = document.getElementById('login-password').value;
+                const success = await verifyLoginCredentials(email, password);
+                if (success) {
+                    setTimeout(() => {
+                        window.location.hash = '#/home';
+                        toggleLoading('login', false);
+                    }, 800);
+                } else {
+                    toggleLoading('login', false);
+                    showError('login', "Bilgiler hatali!");
+                }
+            });
+
+            document.getElementById('form-register')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const pass = document.getElementById('register-password').value;
+                const confirm = document.getElementById('register-confirm-password').value;
+                if (pass !== confirm) { 
+                    showError('register', "Sifreler uyusmuyor!"); 
+                    return; 
+                }
+                toggleLoading('register', true);
+                const result = await saveRegistrationData(
+                    document.getElementById('register-username').value.trim(),
+                    document.getElementById('register-email').value.trim(),
+                    pass
+                );
+                if (result.success) {
+                    setTimeout(() => {
+                        window.location.hash = '#/login';
+                        toggleLoading('register', false);
+                    }, 1500);
+                } else {
+                    toggleLoading('register', false);
+                    showError('register', result.message);
+                }
+            });
+        });
+
+        function toggleLoading(type, isLoading) {
+            const form = document.getElementById(`form-${type}`);
+            const loading = document.getElementById(`${type}-loading`);
+            if (isLoading) {
+                form.classList.add('opacity-50', 'pointer-events-none');
+                loading.classList.remove('hidden');
+            } else {
+                form.classList.remove('opacity-50', 'pointer-events-none');
+                loading.classList.add('hidden');
+            }
+        }
+
+        function showError(type, message) {
+            const errorBox = document.getElementById(`${type}-error`);
+            errorBox.textContent = message;
+            errorBox.classList.remove('hidden');
+            setTimeout(() => errorBox.classList.add('hidden'), 3000);
+        }
+
+        function initSnowEffects() {
+            const container = document.getElementById('day-effects-container');
+            container.style.display = 'block';
+            for (let i = 0; i < 50; i++) {
+                const flake = document.createElement('div');
+                flake.classList.add('snowflake');
+                flake.style.width = flake.style.height = Math.random() * 5 + 2 + 'px';
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                flake.style.animationDelay = Math.random() * 2 + 's';
+                container.appendChild(flake);
+            }
+        }
+
+        function initNightEffects() {
+            const nightContainer = document.getElementById('night-effects-container');
+            const staticContainer = document.getElementById('static-stars-container');
+            nightContainer.style.display = 'block';
+            staticContainer.style.display = 'block';
+            setInterval(() => createStar(nightContainer, 'shooting-star'), 2500); 
+            for (let i = 0; i < 60; i++) {
+                const star = document.createElement('div');
+                star.classList.add('static-star');
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = star.style.height = Math.random() * 2 + 1 + 'px';
+                star.style.animationDuration = Math.random() * 3 + 2 + 's'; 
+                staticContainer.appendChild(star);
+            }
+        }
+
+        function createStar(container, type) {
+            const el = document.createElement('div');
+            el.classList.add(type);
+            el.style.top = Math.random() * 50 + '%';
+            el.style.left = Math.random() * 100 + '%';
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 2100);
+        }
+    </script>
+    <style>
+        /* Custom Font Definition */
+        @font-face {
+            font-family: 'HizliFont';
+            src: url('font.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+        
+        body {
+            font-family: 'HizliFont', 'Inter', sans-serif;
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; color: white; position: relative;
+            transition: background 1s ease;
+        }
+
+        /* Logo Styling */
+        .neon-logo {
+            width: 80px;
+            height: auto;
+            margin-bottom: 0.75rem;
+            filter: invert(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
+            animation: logoPulse 3s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); filter: invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); }
+            50% { transform: scale(1.05); filter: invert(1) drop-shadow(0 0 18px rgba(2, 122, 255, 0.9)); }
+        }
+
+        body.day-mode {
+            background: linear-gradient(125deg, #001f3f, #027aff, #001233);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        body.night-mode { background: black; }
+        body.night-mode .bg-gradient-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #000000 0%, #05051a 50%, #000814 100%);
+            z-index: -5; display: block;
+        }
+        body.day-mode .bg-gradient-overlay { display: none; }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #day-effects-container, #night-effects-container, #static-stars-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: none;
+        }
+
+        .snowflake { position: absolute; background: white; border-radius: 50%; top: -10px; animation: fall linear infinite; }
+        @keyframes fall { 0% { transform: translateY(-10vh); } 100% { transform: translateY(110vh); } }
+
+        .static-star { position: absolute; background: white; border-radius: 50%; animation: twinkle infinite ease-in-out; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.9; } }
+
+        .shooting-star { position: absolute; width: 100px; height: 1px; background: linear-gradient(90deg, transparent, white, transparent); transform: rotate(-45deg); animation: shoot 2s linear forwards; }
+        @keyframes shoot { 0% { transform: translate(0,0) rotate(-45deg); opacity: 1; } 100% { transform: translate(-400px, 400px) rotate(-45deg); opacity: 0; } }
+
+        .glass-panel {
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 35px; padding: 3rem; width: 90%; max-width: 420px;
+            display: flex; flex-direction: column; align-items: center;
+            position: relative; z-index: 50; transition: all 0.5s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+        }
+        body.night-mode .glass-panel { background: linear-gradient(135deg, rgba(0, 60, 180, 0.45), rgba(0, 20, 100, 0.45)); }
+        body.day-mode .glass-panel { background: rgba(15, 35, 75, 0.4); }
+
+        /* Preserve original Inter font for logo text */
+        .animated-title { 
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 900; 
+            letter-spacing: -1px; 
+            margin-bottom: 2rem; 
+            text-align: center; 
+        }
+        body.day-mode .animated-title { background: linear-gradient(to right, #fff, #00f3ff, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: shine 3s linear infinite; font-size: 2.8rem; }
+        body.night-mode .animated-title { color: #fff; text-shadow: 0 0 15px rgba(2, 122, 255, 0.8); font-size: 2.5rem; }
+        @keyframes shine { 0% { background-position: 200%; } 100% { background-position: -200%; } }
+
+        .custom-input { width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 15px 22px; border-radius: 18px; margin-bottom: 15px; outline: none; transition: 0.3s; font-size: 0.95rem; }
+        .custom-input:focus { border-color: #027aff; background: rgba(255, 255, 255, 0.1); box-shadow: 0 0 15px rgba(2, 122, 255, 0.2); }
+        
+        .action-btn { width: 100%; font-weight: 800; padding: 16px; border-radius: 18px; border: none; cursor: pointer; transition: 0.3s; letter-spacing: 1px; background: white; color: #027aff; margin-top: 10px; }
+        .action-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); filter: brightness(1.1); }
+
+        .error-message { background: rgba(220, 38, 38, 0.3); border: 1px solid #dc2626; color: #ffcccc; padding: 12px; border-radius: 12px; margin-bottom: 20px; width: 100%; text-align: center; font-size: 0.9rem; }
+        
+        .animate-pop-in { animation: popIn 0.5s ease-out forwards; }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* Smooth Mini Loader CSS */
+        .smooth-mini-loader {
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #ffffff;
+            border-radius: 50%;
+            animation: smoothRotate 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            margin-bottom: 1.5rem;
+        }
+        @keyframes smoothRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- 423 CAM & IŞIK KIRILMASI (REFRACTION) EFEKTLERİ --- */
+        .crystal-box {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.45),
+                inset 0 0 25px rgba(255, 255, 255, 0.18),
+                0 0 20px rgba(2, 122, 255, 0.35);
+            border-radius: 28px;
+            padding: 2.2rem 1.8rem;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Işığı Kıran Harika Çapraz Parlama Animasyonu */
+        .crystal-box::before {
+            content: '';
+            position: absolute;
+            top: -60%;
+            left: -60%;
+            width: 220%;
+            height: 220%;
+            background: linear-gradient(
+                115deg,
+                transparent 42%,
+                rgba(255, 255, 255, 0.15) 47%,
+                rgba(255, 255, 255, 0.35) 50%,
+                transparent 53%
+            );
+            transform: rotate(25deg);
+            animation: lightRefraction 5s infinite linear;
+            pointer-events: none;
+        }
+
+        @keyframes lightRefraction {
+            0% { transform: translateX(-100%) rotate(25deg); }
+            35%, 100% { transform: translateX(100%) rotate(25deg); }
+        }
+
+        /* Cam Gibi Duran Başlık Yazısı */
+        .glass-text-title {
+            background: linear-gradient(135deg, #ffffff 0%, #cce6ff 50%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(2, 122, 255, 0.6);
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+
+        .error-code-badge {
+            background: rgba(2, 122, 255, 0.25);
+            border: 1px solid rgba(2, 122, 255, 0.5);
+            padding: 4px 14px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            display: inline-block;
+            box-shadow: 0 0 15px rgba(2, 122, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient-overlay"></div>
+    <div id="day-effects-container"></div>
+    <div id="static-stars-container"></div>
+    <div id="night-effects-container"></div>
+
+    <!-- Login Page -->
+    <div id="page-login" class="page-content hidden w-full flex justify-center">
+        <div class="glass-panel">
+            <img src="sonlogo.png" alt="Logo" class="neon-logo">
+            <h1 class="animated-title">hizliyim.com</h1>
+            
+            <div id="login-error" class="error-message hidden"></div>
+            <div id="login-loading" class="hidden mb-4"><p class="animate-pulse text-xs">Veritabanı kontrol ediliyor.</p></div>
+
+            <form id="form-login" class="w-full">
+                <input type="email" id="login-email" placeholder="E-mail Adresi" class="custom-input" required>
+                <input type="password" id="login-password" placeholder="Password" class="custom-input" required>
+                <button type="submit" class="action-btn">Giriş Yap</button>
+            </form>
+            <div class="mt-6 text-sm opacity-80 text-center">Hesabın yok mu? <a href="#/register" class="font-bold underline">Kayıt Ol</a></div>
+        </div>
+    </div>
+
+    <!-- Register Page -->
+    <div id="page-register" class="page-content hidden w-full flex justify-center">
+        <div class="glass-panel">
+            <img src="sonlogo.png" alt="Logo" class="neon-logo" style="width: 65px;">
+            <h1 class="animated-title" style="font-size: 2rem;">Yeni Hesap</h1>
+            
+            <div id="register-error" class="error-message hidden"></div>
+            <div id="register-loading" class="hidden mb-4"><p class="animate-pulse text-xs">Hesap olusturuluyor.</p></div>
+
+            <form id="form-register" class="w-full">
+                <input type="text" id="register-username" placeholder="Username" class="custom-input" required>
+                <input type="email" id="register-email" placeholder="E-mail Adresi" class="custom-input" required>
+                <input type="password" id="register-password" placeholder="Password" class="custom-input" required>
+                <input type="password" id="register-confirm-password" placeholder="Password Tekrar" class="custom-input" required>
+                <button type="submit" class="action-btn">Kayıt Ol</button>
+            </form>
+            <div class="mt-6 text-sm opacity-80 text-center">Zaten hesabın var mı? <a href="#/login" class="font-bold underline">Giriş Yap</a></div>
+        </div>
+    </div>
+
+    <!-- Home Page -->
+    <div id="page-home" class="page-content hidden w-full flex justify-center">
+        <div class="glass-panel text-center">
+            <img src="sonlogo.png" alt="Logo" class="neon-logo" style="margin-bottom: 0.5rem;">
+            <!-- Smooth Loader Added Under Logo -->
+            <div class="smooth-mini-loader"></div>
+            
+            <h1 class="text-3xl font-bold mb-4">Hoşgeldin!</h1>
+            <p class="opacity-90 mb-8 text-lg">Hesabın admin onayı bekliyor.</p>
+            <button onclick="location.reload()" class="action-btn">Sayfayı Yenile</button>
+        </div>
+    </div>
+
+    <!-- 423 Ulaşılamıyor (Offline) Sayfası -->
+    <div id="page-423" class="page-content hidden w-full flex justify-center px-4">
+        <div class="glass-panel">
+            <img src="sonlogo.png" alt="Logo" class="neon-logo" style="width: 70px; margin-bottom: 1rem;">
+            
+            <div class="crystal-box my-2">
+                <span class="error-code-badge">HATA 423</span>
+                
+                <!-- Büyükçe Türkçe Yazı -->
+                <h2 class="glass-text-title text-2xl sm:text-3xl md:text-4xl font-black mb-3 leading-tight">
+                    Şuanda çevrimdışıyız
+                </h2>
+                
+                <!-- Daha Küçük İngilizce Yazı -->
+                <p class="text-xs sm:text-sm font-medium tracking-wide text-blue-200 opacity-80 uppercase">
+                    We are currently offline
+                </p>
+            </div>
+
+            <button onclick="location.reload()" class="action-btn mt-6">Tekrar Deneyin</button>
+            <div class="mt-4 text-xs opacity-75 text-center">
+                <a href="#/login" class="underline">Giriş Ekranına Dön</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
